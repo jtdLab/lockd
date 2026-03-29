@@ -8,7 +8,9 @@ environment:
 dependencies:
   analyzer: ^10.0.1
   change_case: ^2.2.0
+  code_builder: ^4.11.1
   collection: ^1.19.0
+  dart_style: ^3.1.7
   glob: ^2.1.0
   path: ^1.9.0
   yaml: ^3.1.0
