@@ -8,7 +8,7 @@ import 'package:yaml/yaml.dart';
 /// JSON object key style for generated `fromJson` / `toJson` when
 /// `@JsonKey` is omitted.
 ///
-/// Config: `lockd.yaml` → `gen.field_rename`
+/// Config: `lockd.yaml` → `field_rename`
 /// (`camel` | `kebab` | `snake` | `pascal`), optional; default `camel`.
 enum LockdFieldRename {
   /// camelCase (unchanged).
@@ -42,7 +42,7 @@ LockdFieldRename _parseFieldRenameYaml(Object? raw) {
   if (raw == null) return LockdFieldRename.camel;
   if (raw is! String) {
     throw const LockdException(
-      'lockd.yaml gen.field_rename must be a string.',
+      'lockd.yaml field_rename must be a string.',
     );
   }
   switch (raw) {
@@ -56,13 +56,13 @@ LockdFieldRename _parseFieldRenameYaml(Object? raw) {
       return LockdFieldRename.pascal;
     default:
       throw LockdException(
-        'lockd.yaml gen.field_rename: '
+        'lockd.yaml field_rename: '
         'expected camel, kebab, snake, or pascal; got "$raw".',
       );
   }
 }
 
-/// Reads [LockdFieldRename] from `./lockd.yaml` (`gen.field_rename`),
+/// Reads [LockdFieldRename] from `./lockd.yaml` (`field_rename`),
 /// defaulting to [LockdFieldRename.camel].
 LockdFieldRename loadLockdFieldRenameFromProjectRoot({
   String workingDirectory = '.',
@@ -71,15 +71,13 @@ LockdFieldRename loadLockdFieldRenameFromProjectRoot({
   if (!file.existsSync()) return LockdFieldRename.camel;
   final dynamic yaml = loadYaml(file.readAsStringSync());
   if (yaml is! Map) return LockdFieldRename.camel;
-  final gen = yaml['gen'];
-  if (gen is! Map) return LockdFieldRename.camel;
-  return _parseFieldRenameYaml(gen['field_rename']);
+  return _parseFieldRenameYaml(yaml['field_rename']);
 }
 
 /// Default glob patterns when no `lockd.yaml` or no `include` key.
 const List<String> defaultLockdIncludeGlobs = ['lib/**.dart'];
 
-/// Reads include glob patterns from `./lockd.yaml` (`gen.include`),
+/// Reads include glob patterns from `./lockd.yaml` (`include`),
 /// defaulting to [defaultLockdIncludeGlobs].
 List<String> loadLockdIncludeGlobs({
   String workingDirectory = '.',
@@ -88,9 +86,7 @@ List<String> loadLockdIncludeGlobs({
   if (!file.existsSync()) return defaultLockdIncludeGlobs;
   final dynamic yaml = loadYaml(file.readAsStringSync());
   if (yaml is! Map) return defaultLockdIncludeGlobs;
-  final gen = yaml['gen'];
-  if (gen is! Map) return defaultLockdIncludeGlobs;
-  final include = gen['include'];
+  final include = yaml['include'];
   if (include is! List || include.isEmpty) {
     return defaultLockdIncludeGlobs;
   }

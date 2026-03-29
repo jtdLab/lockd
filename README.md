@@ -104,22 +104,21 @@ All part files belonging to the same library are aggregated into a single genera
 Create a `lockd.yaml` file next to your `pubspec.yaml`:
 
 ```yaml
-gen:
-  # Glob patterns controlling which files are scanned (default: lib/**.dart)
-  include:
-    - lib/models/**.dart
-    - lib/state/**.dart
+# Glob patterns controlling which files are scanned (default: lib/**.dart)
+include:
+  - lib/models/**.dart
+  - lib/state/**.dart
 
-  # JSON key style when @JsonKey is not specified
-  # Options: camel (default), snake, kebab, pascal
-  field_rename: snake
+# JSON key style when @JsonKey is not specified
+# Options: camel (default), snake, kebab, pascal
+field_rename: snake
 ```
 
-### `gen.include`
+### `include`
 
 A list of glob patterns. Only matching `.dart` files are considered. Defaults to `lib/**.dart` when omitted.
 
-### `gen.field_rename`
+### `field_rename`
 
 Controls how Dart field names are transformed into JSON map keys:
 
