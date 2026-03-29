@@ -10,6 +10,7 @@ const lockd = Lockd();
 
 /// Annotation class for [lockd].
 class Lockd {
+  /// Creates a [Lockd] annotation.
   const Lockd();
 }
 
@@ -20,31 +21,37 @@ class Lockd {
 /// String name;
 /// ```
 class Default {
+  /// Creates a [Default] annotation with the given [defaultValue].
   const Default(this.defaultValue);
 
+  /// The default value for the field.
   final Object? defaultValue;
 }
 
-/// Annotation that marks a field to have specific name in JSON.
+/// Annotation that marks a field to have a specific name in JSON.
 ///
 /// ```dart
 /// @JsonKey('name')
 /// String name;
 /// ```
 class JsonKey {
+  /// Creates a [JsonKey] annotation with the given [name].
   const JsonKey(this.name);
 
+  /// The JSON key name.
   final String name;
 }
 
-/// Annotation that marks a field for a JSON value.
+/// Annotation that marks an enum constant with a custom JSON wire value.
 ///
 /// ```dart
-/// @JsonValue('John Doe')
-/// String name;
+/// @JsonValue(0)
+/// active,
 /// ```
 class JsonValue {
+  /// Creates a [JsonValue] annotation with the given [value].
   const JsonValue(this.value);
 
+  /// The JSON wire value.
   final Object? value;
 }

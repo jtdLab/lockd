@@ -128,6 +128,8 @@ mixin _$AppointmentsState {
   AppointmentsTab get selectedTab;
 
   _AppointmentsStateCopyWith get copyWith => _AppointmentsStateCopyWith(this);
+
+  Map<String, dynamic> toJson();
 }
 
 class _AppointmentsStateCopyWith {
@@ -238,6 +240,8 @@ mixin _$UserProfile {
   String? get nickname;
 
   _UserProfileCopyWith get copyWith => _UserProfileCopyWith(this);
+
+  Map<String, dynamic> toJson();
 }
 
 class _UserProfileCopyWith {
@@ -389,6 +393,8 @@ mixin _$ComplexModel {
   DateTime? get deletedAt;
 
   _ComplexModelCopyWith get copyWith => _ComplexModelCopyWith(this);
+
+  Map<String, dynamic> toJson();
 }
 
 class _ComplexModelCopyWith {
@@ -565,6 +571,8 @@ mixin _$Item {
   List<Status> get statuses;
 
   _ItemCopyWith get copyWith => _ItemCopyWith(this);
+
+  Map<String, dynamic> toJson();
 }
 
 class _ItemCopyWith {

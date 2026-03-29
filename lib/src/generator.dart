@@ -363,11 +363,13 @@ String _mixinCopyable(_CopyableEmitModel m) {
       .map((f) => '  ${f.typeSource} get ${f.name};')
       .join('\n\n');
 
+  final toJson = m.hasFromJson ? '\n\n  Map<String, dynamic> toJson();' : '';
+
   return '''
 mixin ${m.mixinName} {
 $getters
 
-  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);
+  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);$toJson
 }'''
       .trim();
 }
