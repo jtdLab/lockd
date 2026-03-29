@@ -61,7 +61,7 @@ abstract class User with _$User {
     required int age,
   }) = _User;
 
-  factory User.fromJson(Map<String, dynamic> json) = _User.fromJson;
+  factory User.fromJson(Map<String, dynamic> json) = _User.fromJson(json);
 }
 ```
 
