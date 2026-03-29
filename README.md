@@ -71,12 +71,13 @@ The generated code handles primitives, `DateTime`, `Duration`, `List<T>`, nested
 
 ## Annotations
 
-| Annotation          | Target        | Description                                       |
-| ------------------- | ------------- | ------------------------------------------------- |
-| `@lockd`            | class         | Marks a class for code generation.                |
-| `@Default(value)`   | field         | Sets a default value for a constructor parameter. |
-| `@JsonKey('name')`  | field         | Overrides the JSON key for a field.               |
-| `@JsonValue(value)` | enum constant | Overrides the JSON wire value for an enum case.   |
+| Annotation                    | Target        | Description                                          |
+| ----------------------------- | ------------- | ---------------------------------------------------- |
+| `@lockd`                      | class         | Marks a class for code generation.                   |
+| `@Lockd(unionKey: 'kind')`   | sealed class  | Marks a sealed class with a custom discriminator key. |
+| `@Default(value)`             | field         | Sets a default value for a constructor parameter.    |
+| `@JsonKey('name')`            | field         | Overrides the JSON key for a field.                  |
+| `@JsonValue(value)`           | enum constant | Overrides the JSON wire value for an enum case.      |
 
 ## Part files
 
@@ -128,6 +129,59 @@ Controls how Dart field names are transformed into JSON map keys:
 | `snake`  | `firstName` | `first_name` |
 | `kebab`  | `firstName` | `first-name` |
 | `pascal` | `firstName` | `FirstName`  |
+
+## Sealed classes (union types)
+
+lockd generates variant impl classes for sealed class unions. Annotate the sealed class with `@lockd` and use named factory constructors that redirect to public variant classes:
+
+```dart
+@lockd
+sealed class Event with _$Event {
+  const factory Event.success({required String data}) = EventSuccess;
+  const factory Event.error({required String message, required int code}) = EventError;
+}
+```
+
+This generates:
+
+- A shared **mixin** (`_$Event`)
+- A **variant class** for each named constructor (`EventSuccess`, `EventError`)
+- Per-variant **copyWith** (only for variants with fields)
+- Per-variant **toString** using the constructor name (e.g. `Event.success(data: hello)`)
+
+### Sealed JSON serialisation
+
+Add a `fromJson` factory to enable JSON dispatch. Each variant's `toJson` includes a discriminator field (default `'type'`) set to the constructor name:
+
+```dart
+@lockd
+sealed class Event with _$Event {
+  const factory Event.success({required String data}) = EventSuccess;
+  const factory Event.error({required String message}) = EventError;
+
+  factory Event.fromJson(Map<String, dynamic> json) =>
+      _Event.fromJson(json);
+}
+```
+
+Generated `EventSuccess.toJson()` produces `{'type': 'success', 'data': '...'}`, and `_Event.fromJson` dispatches back to the correct variant based on the `type` field.
+
+### Custom discriminator key
+
+Use `@Lockd(unionKey: 'kind')` instead of `@lockd` to change the discriminator field name:
+
+```dart
+@Lockd(unionKey: 'kind')
+sealed class Action with _$Action {
+  const factory Action.tap() = ActionTap;
+  const factory Action.swipe() = ActionSwipe;
+
+  factory Action.fromJson(Map<String, dynamic> json) =>
+      _Action.fromJson(json);
+}
+```
+
+This uses `'kind'` instead of `'type'` as the JSON discriminator key.
 
 ## Enum support
 

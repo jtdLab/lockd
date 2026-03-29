@@ -9,9 +9,23 @@
 const lockd = Lockd();
 
 /// Annotation class for [lockd].
+///
+/// Use the default [lockd] constant for standard behaviour, or construct
+/// directly to configure sealed-class options:
+///
+/// ```dart
+/// @Lockd(unionKey: 'kind')
+/// sealed class Event with _$Event { ... }
+/// ```
 class Lockd {
   /// Creates a [Lockd] annotation.
-  const Lockd();
+  ///
+  /// [unionKey] is the JSON discriminator field name used for sealed class
+  /// union serialisation (default `'type'`).
+  const Lockd({this.unionKey = 'type'});
+
+  /// JSON discriminator field name for sealed union types.
+  final String unionKey;
 }
 
 /// Annotation that marks a field for a default value.

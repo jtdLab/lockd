@@ -111,6 +111,23 @@ bool _hasLockdAnnotation(ClassDeclaration decl) {
   return false;
 }
 
+String _lockdUnionKey(ClassDeclaration decl) {
+  for (final meta in decl.metadata) {
+    final name = _annotationSimpleName(meta);
+    if (name != 'lockd' && name != 'Lockd') continue;
+    final args = meta.arguments;
+    if (args == null) continue;
+    for (final arg in args.arguments) {
+      if (arg is NamedExpression && arg.name.label.name == 'unionKey') {
+        final expr = arg.expression;
+        if (expr is SimpleStringLiteral) return expr.value;
+        if (expr is StringLiteral) return expr.stringValue ?? 'type';
+      }
+    }
+  }
+  return 'type';
+}
+
 String? _jsonKeyNameFromAnnotation(Annotation meta) {
   final args = meta.arguments;
   if (args == null) return null;
@@ -274,7 +291,13 @@ String generatedDataClassPart(
     libraryEnums: libraryEnums,
     fieldRename: fieldRename,
   );
-  if (models.isEmpty) return '';
+  final sealedModels = _parseSealedUnionModels(
+    librarySource,
+    unit: unit,
+    libraryEnums: libraryEnums,
+    fieldRename: fieldRename,
+  );
+  if (models.isEmpty && sealedModels.isEmpty) return '';
   final enumHelpers = includeEnumHelpers
       ? _libraryEnumJsonHelpers(models, libraryEnums)
       : '';
@@ -304,6 +327,26 @@ String generatedDataClassPart(
         '',
         _classPrivateImpl(m),
         '',
+      ],
+      for (final s in sealedModels) ...[
+        '// ########################################################',
+        '// ${s.publicName}',
+        '// ########################################################',
+        '',
+        _sealedMixin(s),
+        '',
+        for (final v in s.variants) ...[
+          if (v.fields.isNotEmpty) ...[
+            _sealedVariantCopyWith(v),
+            '',
+          ],
+          _sealedVariantImpl(s, v),
+          '',
+        ],
+        if (s.hasFromJson) ...[
+          _sealedDispatcher(s),
+          '',
+        ],
       ],
     ],
   );
@@ -352,6 +395,80 @@ class _CopyableEmitModel {
 
   String get mixinName => '_\$$publicName';
   String get copyWithName => '_${publicName}CopyWith';
+}
+
+// ---------------------------------------------------------------------------
+// Sealed union model
+// ---------------------------------------------------------------------------
+
+class _SealedVariant {
+  _SealedVariant({
+    required this.constructorName,
+    required this.implName,
+    required this.fields,
+    required this.ctorIsConst,
+  });
+
+  final String constructorName;
+  final String implName;
+  final List<_Field> fields;
+  final bool ctorIsConst;
+
+  String get copyWithName => '${implName}CopyWith';
+}
+
+class _SealedUnionEmitModel {
+  _SealedUnionEmitModel({
+    required this.publicName,
+    required this.hasFromJson,
+    required this.unionKey,
+    required this.variants,
+    required this.libraryEnums,
+    required this.fieldRename,
+  });
+
+  final String publicName;
+  final bool hasFromJson;
+  final String unionKey;
+  final List<_SealedVariant> variants;
+  final Map<String, List<LockdEnumWire>> libraryEnums;
+  final LockdFieldRename fieldRename;
+
+  String get mixinName => '_\$$publicName';
+  String get dispatcherName => '_$publicName';
+
+  late final Map<String, String> sharedFields = _computeSharedMixinFields(variants);
+}
+
+/// Computes fields that are present in every variant with a compatible type.
+/// If any variant has the field as nullable, the mixin type is nullable.
+Map<String, String> _computeSharedMixinFields(List<_SealedVariant> variants) {
+  if (variants.isEmpty) return {};
+
+  final candidates = <String, String>{
+    for (final f in variants.first.fields) f.name: f.typeSource,
+  };
+  for (var i = 1; i < variants.length; i++) {
+    final vFields = {for (final f in variants[i].fields) f.name: f.typeSource};
+    candidates.removeWhere((name, _) => !vFields.containsKey(name));
+    for (final name in candidates.keys.toList()) {
+      final merged = _mergeFieldTypes(candidates[name]!, vFields[name]!);
+      if (merged == null) {
+        candidates.remove(name);
+      } else {
+        candidates[name] = merged;
+      }
+    }
+  }
+  return candidates;
+}
+
+String? _mergeFieldTypes(String a, String b) {
+  final aBase = _fieldTypeWithoutTrailingNullMarkers(a);
+  final bBase = _fieldTypeWithoutTrailingNullMarkers(b);
+  if (aBase != bBase) return null;
+  if (_fieldTypeIsNullable(a) || _fieldTypeIsNullable(b)) return '$aBase?';
+  return aBase;
 }
 
 // ---------------------------------------------------------------------------
@@ -913,6 +1030,168 @@ $fields$toJson
 }
 
 // ---------------------------------------------------------------------------
+// Sealed union emission
+// ---------------------------------------------------------------------------
+
+String _sealedMixin(_SealedUnionEmitModel m) {
+  final shared = m.sharedFields;
+  final getters =
+      shared.entries.map((e) => '  ${e.value} get ${e.key};').join('\n');
+  final toJson =
+      m.hasFromJson ? '  Map<String, dynamic> toJson();' : '';
+  final bodyParts = <String>[
+    if (getters.isNotEmpty) getters,
+    if (toJson.isNotEmpty) toJson,
+  ];
+  final body = bodyParts.join('\n\n');
+  if (body.isEmpty) return 'mixin ${m.mixinName} {\n}';
+  return 'mixin ${m.mixinName} {\n$body\n}';
+}
+
+String _sealedVariantCopyWith(_SealedVariant v) {
+  const unset = '_unset';
+  final params =
+      v.fields.map((f) => '    Object? ${f.name} = $unset,').join('\n');
+  final body =
+      'return ${v.implName}(\n'
+      '      ${v.fields.map((f) => '${f.name}: _pick<${f.typeSource}>(${f.name}, _v.${f.name})').join(',\n      ')},\n'
+      '    );';
+  return '''
+class ${v.copyWithName} {
+  ${v.copyWithName}(this._v);
+
+  final ${v.implName} _v;
+
+  T _pick<T>(Object? value, T current) {
+    return identical(value, _unset) ? current : value as T;
+  }
+
+  ${v.implName} call({
+$params
+  }) {
+    $body
+  }
+}'''
+      .trim();
+}
+
+String _sealedVariantImpl(_SealedUnionEmitModel m, _SealedVariant v) {
+  final constKw = v.ctorIsConst ? 'const ' : '';
+  final head =
+      '$constKw${v.implName}'
+      '${_implConstructorParamsThisFormals(v.fields)}';
+
+  final fakeModel = _CopyableEmitModel(
+    publicName: v.implName,
+    implName: v.implName,
+    fields: v.fields,
+    hasFromJson: m.hasFromJson,
+    ctorIsConst: v.ctorIsConst,
+    libraryEnums: m.libraryEnums,
+    fieldRename: m.fieldRename,
+  );
+
+  final fromJsonBlock = m.hasFromJson
+      ? () {
+          if (v.fields.isEmpty) {
+            return '\n\n'
+                '  factory ${v.implName}.fromJson('
+                'Map<String, dynamic> json) {\n'
+                '    return ${constKw.isEmpty ? '' : 'const '}${v.implName}();\n'
+                '  }';
+          }
+          return '\n\n'
+              '  factory ${v.implName}.fromJson('
+              'Map<String, dynamic> json) {\n'
+              '    return ${v.implName}(\n'
+              '      ${v.fields.map((f) => '${f.name}: ${_fromJsonAssignment(f, fakeModel)}').join(',\n      ')},\n'
+              '    );\n'
+              '  }';
+        }()
+      : '';
+
+  final sharedNames = m.sharedFields.keys.toSet();
+  final fieldsBlock = v.fields
+      .map((f) {
+        final prefix = sharedNames.contains(f.name) ? '  @override\n' : '';
+        return '$prefix  final ${f.typeSource} ${f.name};';
+      })
+      .join('\n\n');
+
+  final unionKeyLit = _dartStringLiteralFromValue(m.unionKey);
+  final variantTypeLit = _dartStringLiteralFromValue(v.constructorName);
+  final fieldEntries = v.fields
+      .map(
+        (f) =>
+            '${_dartStringLiteralFromValue(_jsonMapKeyForField(f, m.fieldRename))}: ${_toJsonValueExpr(f, fakeModel)}',
+      )
+      .join(',\n      ');
+  final toJson = m.hasFromJson
+      ? '\n\n'
+            '  @override\n'
+            '  Map<String, dynamic> toJson() {\n'
+            '    return {\n'
+            '      $unionKeyLit: $variantTypeLit,\n'
+            '${fieldEntries.isEmpty ? '' : '      $fieldEntries,\n'}'
+            '    };\n'
+            '  }'
+      : '';
+
+  final copyWith = v.fields.isNotEmpty
+      ? '\n\n  ${v.copyWithName} get copyWith => ${v.copyWithName}(this);'
+      : '';
+
+  final fieldList =
+      v.fields.map((f) => '${f.name}: \$${f.name}').join(', ');
+  final toStringBody = v.fields.isEmpty
+      ? "'${m.publicName}.${v.constructorName}()'"
+      : "'${m.publicName}.${v.constructorName}($fieldList)'";
+
+  final body = StringBuffer()
+    ..write(
+      'class ${v.implName} with ${m.mixinName} '
+      'implements ${m.publicName} {\n'
+      '  $head;$fromJsonBlock',
+    );
+  if (fieldsBlock.isNotEmpty) {
+    body.write('\n\n$fieldsBlock');
+  }
+  body.write(
+    '$copyWith$toJson\n\n'
+    '  @override\n'
+    '  String toString() =>\n'
+    '      $toStringBody;\n'
+    '}',
+  );
+  return body.toString().trim();
+}
+
+String _sealedDispatcher(_SealedUnionEmitModel m) {
+  final unionKeyLit = _dartStringLiteralFromValue(m.unionKey);
+  final cases = m.variants.map((v) {
+    final lit = _dartStringLiteralFromValue(v.constructorName);
+    return '      $lit => ${v.implName}.fromJson(json),';
+  }).join('\n');
+
+  return '''
+class ${m.dispatcherName} {
+  ${m.dispatcherName}._();
+
+  static ${m.publicName} fromJson(Map<String, dynamic> json) {
+    return switch (json[$unionKeyLit] as String) {
+$cases
+      final unknown => throw ArgumentError.value(
+        unknown,
+        ${_dartStringLiteralFromValue(m.unionKey)},
+        'Unknown union type',
+      ),
+    };
+  }
+}'''
+      .trim();
+}
+
+// ---------------------------------------------------------------------------
 // AST parsing
 // ---------------------------------------------------------------------------
 
@@ -996,6 +1275,69 @@ List<_CopyableEmitModel> _parseCopyableEmitModels(
         ),
       );
     }
+  }
+
+  return out;
+}
+
+List<_SealedUnionEmitModel> _parseSealedUnionModels(
+  String source, {
+  CompilationUnit? unit,
+  Map<String, List<LockdEnumWire>>? libraryEnums,
+  LockdFieldRename fieldRename = LockdFieldRename.camel,
+}) {
+  final resolvedUnit =
+      unit ?? parseString(content: source, throwIfDiagnostics: false).unit;
+  final libEnums = libraryEnums ?? _collectLibraryEnums(source, resolvedUnit);
+  final out = <_SealedUnionEmitModel>[];
+
+  for (final decl in resolvedUnit.declarations) {
+    if (decl is! ClassDeclaration) continue;
+    final publicName = _declaredClassName(decl);
+    if (publicName.startsWith('_')) continue;
+    if (!_hasLockdAnnotation(decl)) continue;
+
+    var hasFromJson = false;
+    for (final m in _classMembers(decl)) {
+      if (m is! ConstructorDeclaration) continue;
+      if (m.factoryKeyword == null) continue;
+      if (m.name?.lexeme == 'fromJson') hasFromJson = true;
+    }
+
+    // Collect named factory constructors with redirects to public classes.
+    final variants = <_SealedVariant>[];
+    for (final m in _classMembers(decl)) {
+      if (m is! ConstructorDeclaration) continue;
+      if (m.factoryKeyword == null) continue;
+      if (m.redirectedConstructor == null) continue;
+      final ctorName = m.name?.lexeme;
+      if (ctorName == null || ctorName == 'fromJson') continue;
+      final implName = m.redirectedConstructor!.type.name.lexeme;
+      if (implName == '_$publicName') continue;
+
+      final fields = _collectFieldsFromFormalParameters(source, m.parameters);
+      variants.add(
+        _SealedVariant(
+          constructorName: ctorName,
+          implName: implName,
+          fields: fields,
+          ctorIsConst: m.constKeyword != null,
+        ),
+      );
+    }
+
+    if (variants.isEmpty) continue;
+
+    out.add(
+      _SealedUnionEmitModel(
+        publicName: publicName,
+        hasFromJson: hasFromJson,
+        unionKey: _lockdUnionKey(decl),
+        variants: variants,
+        libraryEnums: libEnums,
+        fieldRename: fieldRename,
+      ),
+    );
   }
 
   return out;
