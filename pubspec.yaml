@@ -1,0 +1,13 @@
+name: lockd
+description: Cli for data class / json serialization generation.
+version: 1.0.0
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  path: ^1.9.0
+
+dev_dependencies:
+  test: ^1.31.0
+  very_good_analysis: ^10.2.0
