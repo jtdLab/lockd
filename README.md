@@ -8,7 +8,9 @@ A lightweight Dart code generator that produces `copyWith`, `toString`, and opti
 
 ```yaml
 dependencies:
-  lockd: ^1.0.0
+  lockd:
+    git:
+      url: https://github.com/jtdLab/lockd
 ```
 
 ### 2. Define a data class
