@@ -93,9 +93,8 @@ abstract class AppointmentsState with _$AppointmentsState {
     @Default([]) List<Appointment> appointments,
     @Default(AppointmentsTab.upcoming) AppointmentsTab selectedTab,
   }) = _AppointmentsState;
-
-  factory AppointmentsState.fromJson(Map<String, dynamic> json) =
-      _AppointmentsState.fromJson;
+  factory AppointmentsState.fromJson(Map<String, dynamic> json) =>
+      _AppointmentsState.fromJson(json);
 }
 ''';
 
@@ -160,8 +159,12 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
 
   factory _AppointmentsState.fromJson(Map<String, dynamic> json) {
     return _AppointmentsState(
-      appointments: (json['appointments'] as List<dynamic>).map((e) => Appointment.fromJson(e as Map<String, dynamic>)).toList(),
-      selectedTab: AppointmentsTab.fromJson(json['selectedTab'] as Map<String, dynamic>),
+      appointments: (json['appointments'] as List<dynamic>)
+          .map((e) => Appointment.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      selectedTab: AppointmentsTab.fromJson(
+        json['selectedTab'] as Map<String, dynamic>,
+      ),
     );
   }
 
@@ -186,39 +189,36 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
       );
     });
 
-    test(
-      'JSON: all primitive types (String, int, double, bool, nullable)',
-      () {
-        const source = r'''
+    test('JSON: all primitive types (String, int, double, bool, nullable)', () {
+      const source = r'''
 @lockd
 abstract class UserProfile with _$UserProfile {
   const factory UserProfile({
     required String name,
     required int age,
-    @Default(0.0) double score,
-    @Default(false) bool isActive,
+    required double height,
+    required bool isActive,
     String? nickname,
   }) = _UserProfile;
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) =
-      _UserProfile.fromJson;
+  factory UserProfile.fromJson(Map<String, dynamic> json) =>
+      _UserProfile.fromJson(json);
 }
 ''';
 
-        final result = lockdModulePartDartContents(
-          moduleStem: 'user_profile',
-          sourceTexts: [source],
-        );
+      final result = lockdModulePartDartContents(
+        moduleStem: 'user',
+        sourceTexts: [source],
+      );
 
-        expect(
-          result,
-          r"""
+      expect(
+        result,
+        r"""
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'user_profile.dart';
+part of 'user.dart';
 
 // ###### Helpers ####
 
@@ -233,7 +233,7 @@ mixin _$UserProfile {
 
   int get age;
 
-  double get score;
+  double get height;
 
   bool get isActive;
 
@@ -256,14 +256,14 @@ class _UserProfileCopyWith {
   UserProfile call({
     Object? name = _unset,
     Object? age = _unset,
-    Object? score = _unset,
+    Object? height = _unset,
     Object? isActive = _unset,
     Object? nickname = _unset,
   }) {
     return UserProfile(
       name: _pick<String>(name, _v.name),
       age: _pick<int>(age, _v.age),
-      score: _pick<double>(score, _v.score),
+      height: _pick<double>(height, _v.height),
       isActive: _pick<bool>(isActive, _v.isActive),
       nickname: _pick<String?>(nickname, _v.nickname),
     );
@@ -274,8 +274,8 @@ class _UserProfile with _$UserProfile implements UserProfile {
   const _UserProfile({
     required this.name,
     required this.age,
-    this.score = 0.0,
-    this.isActive = false,
+    required this.height,
+    required this.isActive,
     this.nickname,
   });
 
@@ -283,7 +283,7 @@ class _UserProfile with _$UserProfile implements UserProfile {
     return _UserProfile(
       name: json['name'] as String,
       age: json['age'] as int,
-      score: json['score'] as double,
+      height: json['height'] as double,
       isActive: json['isActive'] as bool,
       nickname: json['nickname'] as String?,
     );
@@ -296,7 +296,7 @@ class _UserProfile with _$UserProfile implements UserProfile {
   final int age;
 
   @override
-  final double score;
+  final double height;
 
   @override
   final bool isActive;
@@ -308,7 +308,7 @@ class _UserProfile with _$UserProfile implements UserProfile {
     return {
       'name': name,
       'age': age,
-      'score': score,
+      'height': height,
       'isActive': isActive,
       'nickname': nickname,
     };
@@ -316,66 +316,54 @@ class _UserProfile with _$UserProfile implements UserProfile {
 
   @override
   String toString() =>
-      'UserProfile(name: $name, age: $age, score: $score, isActive: $isActive, nickname: $nickname)';
+      'UserProfile(name: $name, age: $age, height: $height, isActive: $isActive, nickname: $nickname)';
 }
 """,
-        );
-      },
-    );
+      );
+    });
 
-    test(
-      'JSON: non-primitives '
-      '(DateTime, Duration, object, lists, nullable)',
-      () {
-        const source = r'''
+    test('JSON: non-primitives (DateTime, Duration, object, lists, nullable)',
+        () {
+      const source = r'''
 @lockd
-abstract class ComplexModel with _$ComplexModel {
-  const factory ComplexModel({
-    required String name,
-    required int count,
+abstract class AppData with _$AppData {
+  const factory AppData({
     required DateTime createdAt,
     required Duration timeout,
     required Address address,
-    @Default([]) List<String> tags,
-    @Default([]) List<Address> addresses,
-    String? nickname,
-    Address? secondaryAddress,
-    DateTime? deletedAt,
-  }) = _ComplexModel;
-
-  factory ComplexModel.fromJson(Map<String, dynamic> json) =
-      _ComplexModel.fromJson;
+    required List<String> tags,
+    required List<Address> addresses,
+    List<String>? optionalTags,
+  }) = _AppData;
+  factory AppData.fromJson(Map<String, dynamic> json) =>
+      _AppData.fromJson(json);
 }
 ''';
 
-        final result = lockdModulePartDartContents(
-          moduleStem: 'complex_model',
-          sourceTexts: [source],
-        );
+      final result = lockdModulePartDartContents(
+        moduleStem: 'app',
+        sourceTexts: [source],
+      );
 
-        expect(
-          result,
-          r"""
+      expect(
+        result,
+        r"""
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'complex_model.dart';
+part of 'app.dart';
 
 // ###### Helpers ####
 
 const Object _unset = Object();
 
 // ########################################################
-// ComplexModel
+// AppData
 // ########################################################
 
-mixin _$ComplexModel {
-  String get name;
-
-  int get count;
-
+mixin _$AppData {
   DateTime get createdAt;
 
   Duration get timeout;
@@ -386,87 +374,67 @@ mixin _$ComplexModel {
 
   List<Address> get addresses;
 
-  String? get nickname;
+  List<String>? get optionalTags;
 
-  Address? get secondaryAddress;
-
-  DateTime? get deletedAt;
-
-  _ComplexModelCopyWith get copyWith => _ComplexModelCopyWith(this);
+  _AppDataCopyWith get copyWith => _AppDataCopyWith(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _ComplexModelCopyWith {
-  _ComplexModelCopyWith(this._v);
+class _AppDataCopyWith {
+  _AppDataCopyWith(this._v);
 
-  final _$ComplexModel _v;
+  final _$AppData _v;
 
   T _pick<T>(Object? value, T current) {
     return identical(value, _unset) ? current : value as T;
   }
 
-  ComplexModel call({
-    Object? name = _unset,
-    Object? count = _unset,
+  AppData call({
     Object? createdAt = _unset,
     Object? timeout = _unset,
     Object? address = _unset,
     Object? tags = _unset,
     Object? addresses = _unset,
-    Object? nickname = _unset,
-    Object? secondaryAddress = _unset,
-    Object? deletedAt = _unset,
+    Object? optionalTags = _unset,
   }) {
-    return ComplexModel(
-      name: _pick<String>(name, _v.name),
-      count: _pick<int>(count, _v.count),
+    return AppData(
       createdAt: _pick<DateTime>(createdAt, _v.createdAt),
       timeout: _pick<Duration>(timeout, _v.timeout),
       address: _pick<Address>(address, _v.address),
       tags: _pick<List<String>>(tags, _v.tags),
       addresses: _pick<List<Address>>(addresses, _v.addresses),
-      nickname: _pick<String?>(nickname, _v.nickname),
-      secondaryAddress: _pick<Address?>(secondaryAddress, _v.secondaryAddress),
-      deletedAt: _pick<DateTime?>(deletedAt, _v.deletedAt),
+      optionalTags: _pick<List<String>?>(optionalTags, _v.optionalTags),
     );
   }
 }
 
-class _ComplexModel with _$ComplexModel implements ComplexModel {
-  const _ComplexModel({
-    required this.name,
-    required this.count,
+class _AppData with _$AppData implements AppData {
+  const _AppData({
     required this.createdAt,
     required this.timeout,
     required this.address,
-    this.tags = const [],
-    this.addresses = const [],
-    this.nickname,
-    this.secondaryAddress,
-    this.deletedAt,
+    required this.tags,
+    required this.addresses,
+    this.optionalTags,
   });
 
-  factory _ComplexModel.fromJson(Map<String, dynamic> json) {
-    return _ComplexModel(
-      name: json['name'] as String,
-      count: json['count'] as int,
+  factory _AppData.fromJson(Map<String, dynamic> json) {
+    return _AppData(
       createdAt: DateTime.parse(json['createdAt'] as String),
       timeout: Duration(microseconds: json['timeout'] as int),
       address: Address.fromJson(json['address'] as Map<String, dynamic>),
       tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
-      addresses: (json['addresses'] as List<dynamic>).map((e) => Address.fromJson(e as Map<String, dynamic>)).toList(),
-      nickname: json['nickname'] as String?,
-      secondaryAddress: json['secondaryAddress'] == null ? null : Address.fromJson(json['secondaryAddress'] as Map<String, dynamic>),
-      deletedAt: json['deletedAt'] == null ? null : DateTime.parse(json['deletedAt'] as String),
+      addresses: (json['addresses'] as List<dynamic>)
+          .map((e) => Address.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      optionalTags: json['optionalTags'] == null
+          ? null
+          : (json['optionalTags'] as List<dynamic>)
+                .map((e) => e as String)
+                .toList(),
     );
   }
-
-  @override
-  final String name;
-
-  @override
-  final int count;
 
   @override
   final DateTime createdAt;
@@ -484,59 +452,49 @@ class _ComplexModel with _$ComplexModel implements ComplexModel {
   final List<Address> addresses;
 
   @override
-  final String? nickname;
-
-  @override
-  final Address? secondaryAddress;
-
-  @override
-  final DateTime? deletedAt;
+  final List<String>? optionalTags;
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'count': count,
       'createdAt': createdAt.toIso8601String(),
       'timeout': timeout.inMicroseconds,
       'address': address.toJson(),
       'tags': tags,
       'addresses': addresses.map((e) => e.toJson()).toList(),
-      'nickname': nickname,
-      'secondaryAddress': secondaryAddress?.toJson(),
-      'deletedAt': deletedAt?.toIso8601String(),
+      'optionalTags': optionalTags,
     };
   }
 
   @override
   String toString() =>
-      'ComplexModel(name: $name, count: $count, createdAt: $createdAt, timeout: $timeout, address: $address, tags: $tags, addresses: $addresses, nickname: $nickname, secondaryAddress: $secondaryAddress, deletedAt: $deletedAt)';
+      'AppData(createdAt: $createdAt, timeout: $timeout, address: $address, tags: $tags, addresses: $addresses, optionalTags: $optionalTags)';
 }
 """,
-        );
-      },
-    );
+      );
+    });
 
     test('JSON: enums with enum map + list of enums', () {
       const source = r'''
-enum Status {
-  active,
-  inactive,
+enum Theme {
+  light,
+  dark,
+  @JsonValue('system_default')
+  system,
 }
 
 @lockd
-abstract class Item with _$Item {
-  const factory Item({
-    @Default(Status.active) Status status,
-    @Default([]) List<Status> statuses,
-  }) = _Item;
-
-  factory Item.fromJson(Map<String, dynamic> json) =
-      _Item.fromJson;
+abstract class Settings with _$Settings {
+  const factory Settings({
+    required Theme theme,
+    @Default([]) List<Theme> recentThemes,
+  }) = _Settings;
+  factory Settings.fromJson(Map<String, dynamic> json) =>
+      _Settings.fromJson(json);
 }
 ''';
 
       final result = lockdModulePartDartContents(
-        moduleStem: 'item',
+        moduleStem: 'settings',
         sourceTexts: [source],
       );
 
@@ -548,82 +506,79 @@ abstract class Item with _$Item {
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'item.dart';
+part of 'settings.dart';
 
 // ###### Helpers ####
 
 const Object _unset = Object();
 
-const Map<Status, String> _statusJsonMap = {
-  Status.active: 'active',
-  Status.inactive: 'inactive',
+const Map<Theme, String> _themeJsonMap = {
+  Theme.light: 'light',
+  Theme.dark: 'dark',
+  Theme.system: 'system_default',
 };
 
-Status _decodeStatusJsonMap(String v) => _statusJsonMap.entries.singleWhere((e) => e.value == v).key;
+Theme _decodeThemeJsonMap(String v) =>
+    _themeJsonMap.entries.singleWhere((e) => e.value == v).key;
 
 // ########################################################
-// Item
+// Settings
 // ########################################################
 
-mixin _$Item {
-  Status get status;
+mixin _$Settings {
+  Theme get theme;
 
-  List<Status> get statuses;
+  List<Theme> get recentThemes;
 
-  _ItemCopyWith get copyWith => _ItemCopyWith(this);
+  _SettingsCopyWith get copyWith => _SettingsCopyWith(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _ItemCopyWith {
-  _ItemCopyWith(this._v);
+class _SettingsCopyWith {
+  _SettingsCopyWith(this._v);
 
-  final _$Item _v;
+  final _$Settings _v;
 
   T _pick<T>(Object? value, T current) {
     return identical(value, _unset) ? current : value as T;
   }
 
-  Item call({
-    Object? status = _unset,
-    Object? statuses = _unset,
-  }) {
-    return Item(
-      status: _pick<Status>(status, _v.status),
-      statuses: _pick<List<Status>>(statuses, _v.statuses),
+  Settings call({Object? theme = _unset, Object? recentThemes = _unset}) {
+    return Settings(
+      theme: _pick<Theme>(theme, _v.theme),
+      recentThemes: _pick<List<Theme>>(recentThemes, _v.recentThemes),
     );
   }
 }
 
-class _Item with _$Item implements Item {
-  const _Item({
-    this.status = Status.active,
-    this.statuses = const [],
-  });
+class _Settings with _$Settings implements Settings {
+  const _Settings({required this.theme, this.recentThemes = const []});
 
-  factory _Item.fromJson(Map<String, dynamic> json) {
-    return _Item(
-      status: _decodeStatusJsonMap(json['status'] as String),
-      statuses: (json['statuses'] as List<dynamic>).map((e) => _decodeStatusJsonMap(e as String)).toList(),
+  factory _Settings.fromJson(Map<String, dynamic> json) {
+    return _Settings(
+      theme: _decodeThemeJsonMap(json['theme'] as String),
+      recentThemes: (json['recentThemes'] as List<dynamic>)
+          .map((e) => _decodeThemeJsonMap(e as String))
+          .toList(),
     );
   }
 
   @override
-  final Status status;
+  final Theme theme;
 
   @override
-  final List<Status> statuses;
+  final List<Theme> recentThemes;
 
   Map<String, dynamic> toJson() {
     return {
-      'status': _statusJsonMap[status]!,
-      'statuses': statuses.map((e) => _statusJsonMap[e]!).toList(),
+      'theme': _themeJsonMap[theme]!,
+      'recentThemes': recentThemes.map((e) => _themeJsonMap[e]!).toList(),
     };
   }
 
   @override
-  String toString() =>
-      'Item(status: $status, statuses: $statuses)';
+  String toString() => 'Settings(theme: $theme, recentThemes: $recentThemes)';
 }
 """,
       );
@@ -664,31 +619,33 @@ part of 'account_create.dart';
 // AccountCreatePresentationEvent
 // ########################################################
 
-mixin _$AccountCreatePresentationEvent {
-}
+mixin _$AccountCreatePresentationEvent {}
 
-class AccountCreatePresentationEventCreateAccountFailed with _$AccountCreatePresentationEvent implements AccountCreatePresentationEvent {
+class AccountCreatePresentationEventCreateAccountFailed
+    with _$AccountCreatePresentationEvent
+    implements AccountCreatePresentationEvent {
   const AccountCreatePresentationEventCreateAccountFailed();
 
   @override
-  String toString() =>
-      'AccountCreatePresentationEvent.createAccountFailed()';
+  String toString() => 'AccountCreatePresentationEvent.createAccountFailed()';
 }
 
-class AccountCreatePresentationEventCreateAccountSuccess with _$AccountCreatePresentationEvent implements AccountCreatePresentationEvent {
+class AccountCreatePresentationEventCreateAccountSuccess
+    with _$AccountCreatePresentationEvent
+    implements AccountCreatePresentationEvent {
   const AccountCreatePresentationEventCreateAccountSuccess();
 
   @override
-  String toString() =>
-      'AccountCreatePresentationEvent.createAccountSuccess()';
+  String toString() => 'AccountCreatePresentationEvent.createAccountSuccess()';
 }
 
-class AccountCreatePresentationEventFoo with _$AccountCreatePresentationEvent implements AccountCreatePresentationEvent {
+class AccountCreatePresentationEventFoo
+    with _$AccountCreatePresentationEvent
+    implements AccountCreatePresentationEvent {
   const AccountCreatePresentationEventFoo();
 
   @override
-  String toString() =>
-      'AccountCreatePresentationEvent.foo()';
+  String toString() => 'AccountCreatePresentationEvent.foo()';
 }
 """,
       );
@@ -736,14 +693,11 @@ class EventA with _$Event implements Event {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'type': 'a',
-    };
+    return {'type': 'a'};
   }
 
   @override
-  String toString() =>
-      'Event.a()';
+  String toString() => 'Event.a()';
 }
 
 class EventB with _$Event implements Event {
@@ -755,14 +709,11 @@ class EventB with _$Event implements Event {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'type': 'b',
-    };
+    return {'type': 'b'};
   }
 
   @override
-  String toString() =>
-      'Event.b()';
+  String toString() => 'Event.b()';
 }
 
 class _Event {
@@ -826,24 +777,16 @@ class ResultSuccessCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
-  ResultSuccess call({
-    Object? data = _unset,
-  }) {
-    return ResultSuccess(
-      data: _pick<String>(data, _v.data),
-    );
+  ResultSuccess call({Object? data = _unset}) {
+    return ResultSuccess(data: _pick<String>(data, _v.data));
   }
 }
 
 class ResultSuccess with _$Result implements Result {
-  const ResultSuccess({
-    required this.data,
-  });
+  const ResultSuccess({required this.data});
 
   factory ResultSuccess.fromJson(Map<String, dynamic> json) {
-    return ResultSuccess(
-      data: json['data'] as String,
-    );
+    return ResultSuccess(data: json['data'] as String);
   }
 
   final String data;
@@ -852,15 +795,11 @@ class ResultSuccess with _$Result implements Result {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'type': 'success',
-      'data': data,
-    };
+    return {'type': 'success', 'data': data};
   }
 
   @override
-  String toString() =>
-      'Result.success(data: $data)';
+  String toString() => 'Result.success(data: $data)';
 }
 
 class ResultErrorCopyWith {
@@ -872,10 +811,7 @@ class ResultErrorCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
-  ResultError call({
-    Object? message = _unset,
-    Object? code = _unset,
-  }) {
+  ResultError call({Object? message = _unset, Object? code = _unset}) {
     return ResultError(
       message: _pick<String>(message, _v.message),
       code: _pick<int>(code, _v.code),
@@ -884,10 +820,7 @@ class ResultErrorCopyWith {
 }
 
 class ResultError with _$Result implements Result {
-  const ResultError({
-    required this.message,
-    required this.code,
-  });
+  const ResultError({required this.message, required this.code});
 
   factory ResultError.fromJson(Map<String, dynamic> json) {
     return ResultError(
@@ -904,16 +837,11 @@ class ResultError with _$Result implements Result {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'type': 'error',
-      'message': message,
-      'code': code,
-    };
+    return {'type': 'error', 'message': message, 'code': code};
   }
 
   @override
-  String toString() =>
-      'Result.error(message: $message, code: $code)';
+  String toString() => 'Result.error(message: $message, code: $code)';
 }
 
 class _Result {
@@ -977,14 +905,11 @@ class ActionTap with _$Action implements Action {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'kind': 'tap',
-    };
+    return {'kind': 'tap'};
   }
 
   @override
-  String toString() =>
-      'Action.tap()';
+  String toString() => 'Action.tap()';
 }
 
 class ActionSwipe with _$Action implements Action {
@@ -996,14 +921,11 @@ class ActionSwipe with _$Action implements Action {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'kind': 'swipe',
-    };
+    return {'kind': 'swipe'};
   }
 
   @override
-  String toString() =>
-      'Action.swipe()';
+  String toString() => 'Action.swipe()';
 }
 
 class _Action {
@@ -1070,10 +992,7 @@ class MsgInfoCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
-  MsgInfo call({
-    Object? text = _unset,
-    Object? meta = _unset,
-  }) {
+  MsgInfo call({Object? text = _unset, Object? meta = _unset}) {
     return MsgInfo(
       text: _pick<String>(text, _v.text),
       meta: _pick<String?>(meta, _v.meta),
@@ -1082,16 +1001,10 @@ class MsgInfoCopyWith {
 }
 
 class MsgInfo with _$Msg implements Msg {
-  const MsgInfo({
-    required this.text,
-    this.meta,
-  });
+  const MsgInfo({required this.text, this.meta});
 
   factory MsgInfo.fromJson(Map<String, dynamic> json) {
-    return MsgInfo(
-      text: json['text'] as String,
-      meta: json['meta'] as String?,
-    );
+    return MsgInfo(text: json['text'] as String, meta: json['meta'] as String?);
   }
 
   @override
@@ -1104,16 +1017,11 @@ class MsgInfo with _$Msg implements Msg {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'type': 'info',
-      'text': text,
-      'meta': meta,
-    };
+    return {'type': 'info', 'text': text, 'meta': meta};
   }
 
   @override
-  String toString() =>
-      'Msg.info(text: $text, meta: $meta)';
+  String toString() => 'Msg.info(text: $text, meta: $meta)';
 }
 
 class MsgWarnCopyWith {
@@ -1125,10 +1033,7 @@ class MsgWarnCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
-  MsgWarn call({
-    Object? text = _unset,
-    Object? meta = _unset,
-  }) {
+  MsgWarn call({Object? text = _unset, Object? meta = _unset}) {
     return MsgWarn(
       text: _pick<String>(text, _v.text),
       meta: _pick<String>(meta, _v.meta),
@@ -1137,16 +1042,10 @@ class MsgWarnCopyWith {
 }
 
 class MsgWarn with _$Msg implements Msg {
-  const MsgWarn({
-    required this.text,
-    required this.meta,
-  });
+  const MsgWarn({required this.text, required this.meta});
 
   factory MsgWarn.fromJson(Map<String, dynamic> json) {
-    return MsgWarn(
-      text: json['text'] as String,
-      meta: json['meta'] as String,
-    );
+    return MsgWarn(text: json['text'] as String, meta: json['meta'] as String);
   }
 
   @override
@@ -1159,16 +1058,11 @@ class MsgWarn with _$Msg implements Msg {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'type': 'warn',
-      'text': text,
-      'meta': meta,
-    };
+    return {'type': 'warn', 'text': text, 'meta': meta};
   }
 
   @override
-  String toString() =>
-      'Msg.warn(text: $text, meta: $meta)';
+  String toString() => 'Msg.warn(text: $text, meta: $meta)';
 }
 
 class _Msg {

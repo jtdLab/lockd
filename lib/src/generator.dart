@@ -264,7 +264,7 @@ String? lockdModulePartDartContents({
   if (helpersBlock.isNotEmpty) {
     out
       ..write(helpersBlock)
-      ..write('\n\n');
+      ..write('\n');
   }
   out.write(chunks.join('\n'));
   return out.toString();
