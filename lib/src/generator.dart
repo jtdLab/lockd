@@ -480,15 +480,12 @@ String _mixinCopyable(_CopyableEmitModel m) {
       .map((f) => '  ${f.typeSource} get ${f.name};')
       .join('\n\n');
 
-  final toJson = m.hasFromJson ? '\n\n  Map<String, dynamic> toJson();' : '';
-
-  return '''
-mixin ${m.mixinName} {
-$getters
-
-  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);$toJson
-}'''
-      .trim();
+  final parts = <String>[
+    if (getters.isNotEmpty) getters,
+    '  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);',
+    if (m.hasFromJson) '  Map<String, dynamic> toJson();',
+  ];
+  return 'mixin ${m.mixinName} {\n${parts.join('\n\n')}\n}';
 }
 
 // ---------------------------------------------------------------------------
@@ -987,13 +984,19 @@ String _classPrivateImpl(_CopyableEmitModel m) {
       '${_implConstructorParamsThisFormals(m.fields)}';
 
   final fromJson = m.hasFromJson
-      ? '\n\n'
-            '  factory ${m.implName}.fromJson('
-            'Map<String, dynamic> json) {\n'
-            '    return ${m.implName}(\n'
-            '      ${m.fields.map((f) => '${f.name}: ${_fromJsonAssignment(f, m)}').join(',\n      ')},\n'
-            '    );\n'
-            '  }'
+      ? m.fields.isEmpty
+            ? '\n\n'
+                  '  factory ${m.implName}.fromJson('
+                  'Map<String, dynamic> json) {\n'
+                  '    return ${m.implName}();\n'
+                  '  }'
+            : '\n\n'
+                  '  factory ${m.implName}.fromJson('
+                  'Map<String, dynamic> json) {\n'
+                  '    return ${m.implName}(\n'
+                  '      ${m.fields.map((f) => '${f.name}: ${_fromJsonAssignment(f, m)}').join(',\n      ')},\n'
+                  '    );\n'
+                  '  }'
       : '';
 
   final fields = m.fields
@@ -1003,12 +1006,17 @@ String _classPrivateImpl(_CopyableEmitModel m) {
       .join('\n\n');
 
   final toJson = m.hasFromJson
-      ? '\n\n'
-            '  Map<String, dynamic> toJson() {\n'
-            '    return {\n'
-            '      ${m.fields.map((f) => '${_dartStringLiteralFromValue(_jsonMapKeyForField(f, m.fieldRename))}: ${_toJsonValueExpr(f, m)}').join(',\n      ')},\n'
-            '    };\n'
-            '  }'
+      ? m.fields.isEmpty
+            ? '\n\n'
+                  '  Map<String, dynamic> toJson() {\n'
+                  '    return {};\n'
+                  '  }'
+            : '\n\n'
+                  '  Map<String, dynamic> toJson() {\n'
+                  '    return {\n'
+                  '      ${m.fields.map((f) => '${_dartStringLiteralFromValue(_jsonMapKeyForField(f, m.fieldRename))}: ${_toJsonValueExpr(f, m)}').join(',\n      ')},\n'
+                  '    };\n'
+                  '  }'
       : '';
 
   final fieldList = m.fields.map((f) => '${f.name}: \$${f.name}').join(', ');

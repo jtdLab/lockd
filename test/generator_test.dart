@@ -85,6 +85,77 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
       );
     });
 
+    test('JSON: no fields — empty fromJson and toJson bodies', () {
+      const source = r'''
+@lockd
+abstract class Subscription with _$Subscription {
+  const factory Subscription() = _Subscription;
+  factory Subscription.fromJson(Map<String, dynamic> json) =>
+      _Subscription.fromJson(json);
+}
+''';
+
+      final result = lockdModulePartDartContents(
+        moduleStem: 'payments',
+        sourceTexts: [source],
+      );
+
+      expect(
+        result,
+        r"""
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
+
+part of 'payments.dart';
+
+// ###### Helpers ####
+
+const Object _unset = Object();
+
+// ########################################################
+// Subscription
+// ########################################################
+
+mixin _$Subscription {
+  _SubscriptionCopyWith get copyWith => _SubscriptionCopyWith(this);
+
+  Map<String, dynamic> toJson();
+}
+
+class _SubscriptionCopyWith {
+  _SubscriptionCopyWith(this._v);
+
+  final _$Subscription _v;
+
+  T _pick<T>(Object? value, T current) {
+    return identical(value, _unset) ? current : value as T;
+  }
+
+  Subscription call() {
+    return Subscription();
+  }
+}
+
+class _Subscription with _$Subscription implements Subscription {
+  const _Subscription();
+
+  factory _Subscription.fromJson(Map<String, dynamic> json) {
+    return _Subscription();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {};
+  }
+
+  @override
+  String toString() => 'Subscription()';
+}
+""",
+      );
+    });
+
     test('JSON: list + non-primitive with fromJson/toJson', () {
       const source = r'''
 @lockd
