@@ -480,9 +480,12 @@ String _mixinCopyable(_CopyableEmitModel m) {
       .map((f) => '  ${f.typeSource} get ${f.name};')
       .join('\n\n');
 
+  final copyWithGetter = m.fields.isEmpty
+      ? '  ${m.copyWithName} get copyWith => const ${m.copyWithName}();'
+      : '  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);';
   final parts = <String>[
     if (getters.isNotEmpty) getters,
-    '  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);',
+    copyWithGetter,
     if (m.hasFromJson) '  Map<String, dynamic> toJson();',
   ];
   return 'mixin ${m.mixinName} {\n${parts.join('\n\n')}\n}';
@@ -493,18 +496,24 @@ String _mixinCopyable(_CopyableEmitModel m) {
 // ---------------------------------------------------------------------------
 
 String _classCopyWith(_CopyableEmitModel m) {
+  if (m.fields.isEmpty) {
+    return '''
+class ${m.copyWithName} {
+  const ${m.copyWithName}();
+
+  ${m.publicName} call() {
+    return ${m.publicName}();
+  }
+}'''
+        .trim();
+  }
+
   const unset = '_unset';
-  final params = m.fields.isEmpty
-      ? ''
-      : m.fields.map((f) => '    Object? ${f.name} = $unset,').join('\n');
+  final params = m.fields.map((f) => '    Object? ${f.name} = $unset,').join('\n');
 
-  final body = m.fields.isEmpty
-      ? 'return ${m.publicName}();'
-      : 'return ${m.publicName}(\n'
-            '      ${m.fields.map((f) => '${f.name}: _pick<${f.typeSource}>(${f.name}, _v.${f.name})').join(',\n      ')},\n'
-            '    );';
-
-  final signature = m.fields.isEmpty ? '' : '{\n$params\n  }';
+  final body = 'return ${m.publicName}(\n'
+      '      ${m.fields.map((f) => '${f.name}: _pick<${f.typeSource}>(${f.name}, _v.${f.name})').join(',\n      ')},\n'
+      '    );';
 
   return '''
 class ${m.copyWithName} {
@@ -516,7 +525,9 @@ class ${m.copyWithName} {
     return identical(value, _unset) ? current : value as T;
   }
 
-  ${m.publicName} call($signature) {
+  ${m.publicName} call({
+$params
+  }) {
     $body
   }
 }'''

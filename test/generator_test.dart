@@ -119,19 +119,13 @@ const Object _unset = Object();
 // ########################################################
 
 mixin _$Subscription {
-  _SubscriptionCopyWith get copyWith => _SubscriptionCopyWith(this);
+  _SubscriptionCopyWith get copyWith => const _SubscriptionCopyWith();
 
   Map<String, dynamic> toJson();
 }
 
 class _SubscriptionCopyWith {
-  _SubscriptionCopyWith(this._v);
-
-  final _$Subscription _v;
-
-  T _pick<T>(Object? value, T current) {
-    return identical(value, _unset) ? current : value as T;
-  }
+  const _SubscriptionCopyWith();
 
   Subscription call() {
     return Subscription();
