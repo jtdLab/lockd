@@ -428,10 +428,46 @@ abstract class Utils with _$Utils {
         expect(body, contains("json['i18n'] as Map<String, dynamic>)"));
         expect(body, contains('.map('));
         expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
-        expect(body, contains('return {}'));
-        expect(body, isNot(contains("'i18n':")));
+        expect(body, contains("'i18n':"));
+        expect(body, contains('i18n.map((k, v) => MapEntry(k, v))'));
       },
     );
+
+    test('JSON: Utils-like row serializes maps with nested entries', () {
+      const source = r'''
+@lockd
+abstract class Import with _$Import {
+  const factory Import({required String id}) = _Import;
+  factory Import.fromJson(Map<String, dynamic> json) =>
+      _Import.fromJson(json);
+}
+
+@lockd
+abstract class Utils with _$Utils {
+  const factory Utils({
+    required String implementation,
+    @Default({}) Set<Import> imports,
+    String? path,
+    Map<String, Map<String, dynamic>>? i18n,
+  }) = _Utils;
+  factory Utils.fromJson(Map<String, dynamic> json) =>
+      _Utils.fromJson(json);
+}
+''';
+
+      final body = generatedDataClassPart(source, includeEnumHelpers: false);
+
+      expect(body, contains("'implementation': implementation"));
+      expect(
+        body,
+        contains(
+          "'imports': imports.map((e) => e.toJson()).toList()",
+        ),
+      );
+      expect(body, contains("'path': path"));
+      expect(body, contains("'i18n': i18n == null ? null : i18n.map((k, v) => MapEntry(k, v))"));
+      expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
+    });
 
     test('JSON: non-primitives (DateTime, Duration, object, lists, nullable)',
         () {
