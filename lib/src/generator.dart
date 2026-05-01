@@ -1623,15 +1623,37 @@ ConstructorDeclaration? _unnamedGenerativeConstructor(
 // Constructor parameter formatting
 // ---------------------------------------------------------------------------
 
+/// True when [source] begins with a normal constructor invocation:
+/// `Foo()`, `Foo.named()`, `prefix.Foo()`, etc.
+///
+/// Does not match generics before `(` (use `@Default(const Foo<T>())` then).
+bool _looksLikeDartConstructorInvocation(String source) {
+  final s = source.trim();
+  return RegExp(
+    r'^(([a-zA-Z_$]\w*)\.)*[a-zA-Z_$]\w*\s*\(',
+  ).hasMatch(s);
+}
+
+/// True for list / map / set literals and typed collections:
+/// `[]`, `[1, 2]`, `{}`, `{'a'}`, `{'k': v}`, `<T>[]`, `<T>{}`, `<T>{...}`.
+bool _looksLikeDartCollectionOrTypedLiteral(String source) {
+  final s = source.trim();
+  if (s.startsWith('[')) return true;
+  if (s.startsWith('{')) return true;
+  if (s.startsWith('<') && (s.endsWith('[]') || s.endsWith('}'))) {
+    return true;
+  }
+  return false;
+}
+
+/// Prefixes `const` for constructor calls and collection literals so `const`
+/// private ctors compile; everything else is emitted unchanged (aside from trim).
 String _constDefaultInitializerExpression(String source) {
   final s = source.trim();
   if (s.startsWith('const ')) return s;
-  if (s == '[]') return 'const []';
-  if (s == '{}') return 'const {}';
-  if (s.startsWith('<') && (s.endsWith('[]') || s.endsWith('{}'))) {
-    return 'const $s';
-  }
-  return source;
+  if (_looksLikeDartConstructorInvocation(s)) return 'const $s';
+  if (_looksLikeDartCollectionOrTypedLiteral(s)) return 'const $s';
+  return s;
 }
 
 String _implConstructorParamsThisFormals(List<_Field> fields) {

@@ -85,6 +85,27 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
       );
     });
 
+    test('non-JSON: list/map/set and typed literals get const prefix', () {
+      const source = r'''
+@lockd
+abstract class LiteralDefaults with _$LiteralDefaults {
+  const factory LiteralDefaults({
+    @Default([1, 2]) List<int> ints,
+    @Default({'a': 1}) Map<String, int> map,
+    @Default(<int>{1, 2}) Set<int> set,
+    @Default(<String>[]) List<String> typedEmpty,
+  }) = _LiteralDefaults;
+}
+''';
+
+      final body = generatedDataClassPart(source, includeEnumHelpers: false);
+
+      expect(body, contains('this.ints = const [1, 2],'));
+      expect(body, contains("this.map = const {'a': 1},"));
+      expect(body, contains('this.set = const <int>{1, 2},'));
+      expect(body, contains('this.typedEmpty = const <String>[],'));
+    });
+
     test('JSON: no fields — empty fromJson and toJson bodies', () {
       const source = r'''
 @lockd
