@@ -564,6 +564,98 @@ bool _isJsonMapStringDynamic(String baseNonNull) {
   return compact == 'Map<String,dynamic>';
 }
 
+/// Parses `Map<K, V>` into key/type argument strings (handles nested generics).
+(String, String)? _mapKeyAndValueTypesIfMap(String baseNonNull) {
+  final t = baseNonNull.trim();
+  final head = RegExp(r'^Map\s*<').firstMatch(t);
+  if (head == null) return null;
+  final innerStart = head.end;
+  var depth = 1;
+  var i = innerStart;
+  for (; i < t.length; i++) {
+    final ch = t[i];
+    if (ch == '<') {
+      depth++;
+    } else if (ch == '>') {
+      depth--;
+      if (depth == 0) {
+        break;
+      }
+    }
+  }
+  if (depth != 0 || i >= t.length) return null;
+  final inner = t.substring(innerStart, i).trim();
+  var angleDepth = 0;
+  int? commaIdx;
+  for (var j = 0; j < inner.length; j++) {
+    final c = inner[j];
+    if (c == '<') {
+      angleDepth++;
+    } else if (c == '>') {
+      angleDepth--;
+    } else if (c == ',' && angleDepth == 0) {
+      commaIdx = j;
+      break;
+    }
+  }
+  if (commaIdx == null) return null;
+  final key = inner.substring(0, commaIdx).trim();
+  final value = inner.substring(commaIdx + 1).trim();
+  return (key, value);
+}
+
+bool _compactTypeEq(String a, String b) =>
+    a.replaceAll(RegExp(r'\s+'), '') == b.replaceAll(RegExp(r'\s+'), '');
+
+bool _isRecursiveJsonNestedMapValue(String valueNonNull) {
+  final compact = valueNonNull.replaceAll(RegExp(r'\s+'), '');
+  if (compact == 'Map<String,dynamic>') return true;
+  final kv = _mapKeyAndValueTypesIfMap(valueNonNull.trim());
+  if (kv == null) return false;
+  if (!_compactTypeEq(kv.$1, 'String')) return false;
+  return _isRecursiveJsonNestedMapValue(
+    _fieldTypeWithoutTrailingNullMarkers(kv.$2),
+  );
+}
+
+/// `Map<String, Map<String, …, Map<String, dynamic>>>…` (JSON object trees).
+bool _isNestedJsonStringKeyedMapChain(String baseNonNull) {
+  final full = baseNonNull.replaceAll(RegExp(r'\s+'), '');
+  if (full == 'Map<String,dynamic>') return false;
+  final kv = _mapKeyAndValueTypesIfMap(baseNonNull.trim());
+  if (kv == null) return false;
+  if (!_compactTypeEq(kv.$1, 'String')) return false;
+  return _isRecursiveJsonNestedMapValue(
+    _fieldTypeWithoutTrailingNullMarkers(kv.$2),
+  );
+}
+
+/// Decodes nested `Map<String, Map<String, dynamic>>` from raw JSON maps.
+String _nestedStringKeyedMapFromJsonExpr(String mapTypeNonNull, String jsonExpr) {
+  final compact = mapTypeNonNull.replaceAll(RegExp(r'\s+'), '');
+  if (compact == 'Map<String,dynamic>') {
+    return '$jsonExpr as Map<String, dynamic>';
+  }
+  final kv = _mapKeyAndValueTypesIfMap(mapTypeNonNull.trim());
+  if (kv == null) {
+    throw StateError('Invalid nested JSON map type: $mapTypeNonNull');
+  }
+  final valueType = _fieldTypeWithoutTrailingNullMarkers(kv.$2.trim());
+  final inner = _nestedStringKeyedMapFromJsonExpr(valueType, 'v');
+  return '($jsonExpr as Map<String, dynamic>).map((k, v) => MapEntry(k, $inner))';
+}
+
+/// Raw JSON map fields are decoded in `fromJson` but omitted from generated `toJson`.
+bool _omitRawJsonMapFromGeneratedToJson(
+  _Field f,
+  Map<String, List<LockdEnumWire>> libraryEnums,
+) {
+  final shape = _jsonFieldShape(f, libraryEnums);
+  if (shape == _JsonFieldShape.jsonNestedStringKeyedMap) return true;
+  final base = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+  return _isJsonMapStringDynamic(base);
+}
+
 bool _isJsonPrimitiveBase(String baseNonNull) {
   return _jsonPrimitiveTypeBases.contains(baseNonNull.trim()) ||
       _isJsonMapStringDynamic(baseNonNull);
@@ -618,6 +710,7 @@ enum _JsonFieldShape {
   listObject,
   listEnum,
   listUint8List,
+  jsonNestedStringKeyedMap,
   setPrimitive,
   setDateTime,
   setDuration,
@@ -818,6 +911,9 @@ _JsonFieldShape _jsonFieldShape(
   if (_isDateTimeBase(base)) return _JsonFieldShape.dateTime;
   if (_isDurationBase(base)) return _JsonFieldShape.duration;
   if (_isJsonPrimitiveBase(base)) return _JsonFieldShape.primitive;
+  if (_isNestedJsonStringKeyedMapChain(base)) {
+    return _JsonFieldShape.jsonNestedStringKeyedMap;
+  }
   return _JsonFieldShape.object;
 }
 
@@ -866,6 +962,10 @@ String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
       return wrapNullable(
         '$t.fromJson($jx as Map<String, dynamic>)',
       );
+    case _JsonFieldShape.jsonNestedStringKeyedMap:
+      final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+      final expr = _nestedStringKeyedMapFromJsonExpr(baseNonNull, jx);
+      return wrapNullable(expr);
     case _JsonFieldShape.listPrimitive:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
       final inner = _listElementTypeIfListOf(baseNonNull)!;
@@ -985,6 +1085,7 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
   final nullable = _fieldTypeIsNullable(f.typeSource);
   switch (shape) {
     case _JsonFieldShape.primitive:
+    case _JsonFieldShape.jsonNestedStringKeyedMap:
     case _JsonFieldShape.listPrimitive:
     case _JsonFieldShape.setPrimitive:
       return f.name;
@@ -1103,8 +1204,12 @@ String _classPrivateImpl(_CopyableEmitModel m) {
       )
       .join('\n\n');
 
+  final toJsonEmitFields = m.fields
+      .where((f) => !_omitRawJsonMapFromGeneratedToJson(f, m.libraryEnums))
+      .toList();
+
   final toJson = m.hasFromJson
-      ? m.fields.isEmpty
+      ? toJsonEmitFields.isEmpty
             ? '\n\n'
                   '  Map<String, dynamic> toJson() {\n'
                   '    return {};\n'
@@ -1112,7 +1217,7 @@ String _classPrivateImpl(_CopyableEmitModel m) {
             : '\n\n'
                   '  Map<String, dynamic> toJson() {\n'
                   '    return {\n'
-                  '      ${m.fields.map((f) => '${_dartStringLiteralFromValue(_jsonMapKeyForField(f, m.fieldRename))}: ${_toJsonValueExpr(f, m)}').join(',\n      ')},\n'
+                  '      ${toJsonEmitFields.map((f) => '${_dartStringLiteralFromValue(_jsonMapKeyForField(f, m.fieldRename))}: ${_toJsonValueExpr(f, m)}').join(',\n      ')},\n'
                   '    };\n'
                   '  }'
       : '';
@@ -1227,6 +1332,7 @@ String _sealedVariantImpl(_SealedUnionEmitModel m, _SealedVariant v) {
   final unionKeyLit = _dartStringLiteralFromValue(m.unionKey);
   final variantTypeLit = _dartStringLiteralFromValue(v.constructorName);
   final fieldEntries = v.fields
+      .where((f) => !_omitRawJsonMapFromGeneratedToJson(f, m.libraryEnums))
       .map(
         (f) =>
             '${_dartStringLiteralFromValue(_jsonMapKeyForField(f, m.fieldRename))}: ${_toJsonValueExpr(f, fakeModel)}',

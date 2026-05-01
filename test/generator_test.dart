@@ -408,6 +408,31 @@ class _UserProfile with _$UserProfile implements UserProfile {
       );
     });
 
+    test(
+      'JSON: nested Map<String, Map<String, dynamic>> decodes without fromJson',
+      () {
+        const source = r'''
+@lockd
+abstract class Utils with _$Utils {
+  const factory Utils({
+    Map<String, Map<String, dynamic>>? i18n,
+  }) = _Utils;
+  factory Utils.fromJson(Map<String, dynamic> json) =>
+      _Utils.fromJson(json);
+}
+''';
+
+        final body = generatedDataClassPart(source, includeEnumHelpers: false);
+
+        expect(body, isNot(contains('Map<String, Map<String, dynamic>>.fromJson')));
+        expect(body, contains("json['i18n'] as Map<String, dynamic>)"));
+        expect(body, contains('.map('));
+        expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
+        expect(body, contains('return {}'));
+        expect(body, isNot(contains("'i18n':")));
+      },
+    );
+
     test('JSON: non-primitives (DateTime, Duration, object, lists, nullable)',
         () {
       const source = r'''
