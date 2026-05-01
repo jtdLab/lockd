@@ -578,9 +578,16 @@ bool _isDateTimeBase(String baseNonNull) =>
 bool _isDurationBase(String baseNonNull) =>
     _enumLookupKey(baseNonNull) == 'Duration';
 
-String? _listElementTypeIfListOf(String baseNonNull) {
+String? _listElementTypeIfListOf(String baseNonNull) =>
+    _bracketWrappedTypeArg(baseNonNull, 'List');
+
+String? _setElementTypeIfSetOf(String baseNonNull) =>
+    _bracketWrappedTypeArg(baseNonNull, 'Set');
+
+/// Parses `Wrapper<...>` for balanced angle brackets (e.g. `List`, `Set`).
+String? _bracketWrappedTypeArg(String baseNonNull, String wrapper) {
   final t = baseNonNull.trim();
-  final head = RegExp(r'^List\s*<').firstMatch(t);
+  final head = RegExp('^${RegExp.escape(wrapper)}\\s*<').firstMatch(t);
   if (head == null) return null;
   final innerStart = head.end;
   var depth = 1;
@@ -611,6 +618,12 @@ enum _JsonFieldShape {
   listObject,
   listEnum,
   listUint8List,
+  setPrimitive,
+  setDateTime,
+  setDuration,
+  setObject,
+  setEnum,
+  setUint8List,
 }
 
 String _enumLookupKey(String typeSource) {
@@ -752,7 +765,8 @@ List<String> _sortedEnumTypesForWire(
   final ids = <String>{};
   for (final f in fields) {
     final base = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
-    final inner = _listElementTypeIfListOf(base);
+    final inner =
+        _listElementTypeIfListOf(base) ?? _setElementTypeIfSetOf(base);
     if (inner != null) {
       final k = _enumLookupKey(inner);
       if (libraryEnums.containsKey(k)) ids.add(k);
@@ -773,25 +787,29 @@ _JsonFieldShape _jsonFieldShape(
   Map<String, List<LockdEnumWire>> libraryEnums,
 ) {
   final base = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
-  final inner = _listElementTypeIfListOf(base);
+  final listInner = _listElementTypeIfListOf(base);
+  final setInner =
+      listInner != null ? null : _setElementTypeIfSetOf(base);
+  final inner = listInner ?? setInner;
+  final asSet = setInner != null;
   if (inner != null) {
     final innerNonNull = _fieldTypeWithoutTrailingNullMarkers(inner);
     if (libraryEnums.containsKey(_enumLookupKey(inner))) {
-      return _JsonFieldShape.listEnum;
+      return asSet ? _JsonFieldShape.setEnum : _JsonFieldShape.listEnum;
     }
     if (_isUint8ListBase(innerNonNull)) {
-      return _JsonFieldShape.listUint8List;
+      return asSet ? _JsonFieldShape.setUint8List : _JsonFieldShape.listUint8List;
     }
     if (_isDateTimeBase(innerNonNull)) {
-      return _JsonFieldShape.listDateTime;
+      return asSet ? _JsonFieldShape.setDateTime : _JsonFieldShape.listDateTime;
     }
     if (_isDurationBase(innerNonNull)) {
-      return _JsonFieldShape.listDuration;
+      return asSet ? _JsonFieldShape.setDuration : _JsonFieldShape.listDuration;
     }
     if (_isJsonPrimitiveBase(innerNonNull)) {
-      return _JsonFieldShape.listPrimitive;
+      return asSet ? _JsonFieldShape.setPrimitive : _JsonFieldShape.listPrimitive;
     }
-    return _JsonFieldShape.listObject;
+    return asSet ? _JsonFieldShape.setObject : _JsonFieldShape.listObject;
   }
   if (libraryEnums.containsKey(_enumLookupKey(base))) {
     return _JsonFieldShape.enumWire;
@@ -855,6 +873,13 @@ String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
         '($jx as List<dynamic>)'
         '.map((e) => e as $inner).toList()',
       );
+    case _JsonFieldShape.setPrimitive:
+      final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+      final inner = _setElementTypeIfSetOf(baseNonNull)!;
+      return wrapNullable(
+        '($jx as List<dynamic>)'
+        '.map((e) => e as $inner).toSet()',
+      );
     case _JsonFieldShape.listDateTime:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
       final inner = _listElementTypeIfListOf(baseNonNull)!;
@@ -865,6 +890,17 @@ String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
           : '(e) => DateTime.parse(e as String)';
       return wrapNullable(
         '($jx as List<dynamic>).map($mapExpr).toList()',
+      );
+    case _JsonFieldShape.setDateTime:
+      final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+      final inner = _setElementTypeIfSetOf(baseNonNull)!;
+      final innerElNullable = _fieldTypeIsNullable(inner);
+      final mapExpr = innerElNullable
+          ? '(e) => e == null '
+                '? null : DateTime.parse(e as String)'
+          : '(e) => DateTime.parse(e as String)';
+      return wrapNullable(
+        '($jx as List<dynamic>).map($mapExpr).toSet()',
       );
     case _JsonFieldShape.listDuration:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
@@ -877,6 +913,17 @@ String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
       return wrapNullable(
         '($jx as List<dynamic>).map($mapExpr).toList()',
       );
+    case _JsonFieldShape.setDuration:
+      final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+      final inner = _setElementTypeIfSetOf(baseNonNull)!;
+      final innerElNullable = _fieldTypeIsNullable(inner);
+      final mapExpr = innerElNullable
+          ? '(e) => e == null '
+                '? null : Duration(microseconds: e as int)'
+          : '(e) => Duration(microseconds: e as int)';
+      return wrapNullable(
+        '($jx as List<dynamic>).map($mapExpr).toSet()',
+      );
     case _JsonFieldShape.listEnum:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
       final inner = _listElementTypeIfListOf(baseNonNull)!;
@@ -887,12 +934,29 @@ String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
         '($jx as List<dynamic>)'
         '.map((e) => $dec(e as $cast)).toList()',
       );
+    case _JsonFieldShape.setEnum:
+      final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+      final inner = _setElementTypeIfSetOf(baseNonNull)!;
+      final t = _enumLookupKey(inner);
+      final dec = _enumJsonDecodeIdentifier(t);
+      final cast = _enumTypeWireIsInt(libraryEnums, t) ? 'int' : 'String';
+      return wrapNullable(
+        '($jx as List<dynamic>)'
+        '.map((e) => $dec(e as $cast)).toSet()',
+      );
     case _JsonFieldShape.listUint8List:
       return wrapNullable(
         '($jx as List<dynamic>)'
         '.map((e) => Uint8List.fromList('
         '(e as List<dynamic>)'
         '.map((b) => (b as num).toInt()).toList())).toList()',
+      );
+    case _JsonFieldShape.setUint8List:
+      return wrapNullable(
+        '($jx as List<dynamic>)'
+        '.map((e) => Uint8List.fromList('
+        '(e as List<dynamic>)'
+        '.map((b) => (b as num).toInt()).toList())).toSet()',
       );
     case _JsonFieldShape.listObject:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
@@ -902,6 +966,15 @@ String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
         '($jx as List<dynamic>)'
         '.map((e) => $innerClass.fromJson('
         'e as Map<String, dynamic>)).toList()',
+      );
+    case _JsonFieldShape.setObject:
+      final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
+      final inner = _setElementTypeIfSetOf(baseNonNull)!;
+      final innerClass = _fieldTypeWithoutTrailingNullMarkers(inner);
+      return wrapNullable(
+        '($jx as List<dynamic>)'
+        '.map((e) => $innerClass.fromJson('
+        'e as Map<String, dynamic>)).toSet()',
       );
   }
 }
@@ -913,6 +986,7 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
   switch (shape) {
     case _JsonFieldShape.primitive:
     case _JsonFieldShape.listPrimitive:
+    case _JsonFieldShape.setPrimitive:
       return f.name;
     case _JsonFieldShape.dateTime:
       return nullable
@@ -923,8 +997,10 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
           ? '${f.name}?.inMicroseconds'
           : '${f.name}.inMicroseconds';
     case _JsonFieldShape.listDateTime:
+    case _JsonFieldShape.setDateTime:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
-      final inner = _listElementTypeIfListOf(baseNonNull)!;
+      final inner = _listElementTypeIfListOf(baseNonNull) ??
+          _setElementTypeIfSetOf(baseNonNull)!;
       final innerElNullable = _fieldTypeIsNullable(inner);
       final mapBody = innerElNullable
           ? '(e) => e?.toIso8601String()'
@@ -932,8 +1008,10 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
       if (nullable) return '${f.name}?.map($mapBody).toList()';
       return '${f.name}.map($mapBody).toList()';
     case _JsonFieldShape.listDuration:
+    case _JsonFieldShape.setDuration:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
-      final inner = _listElementTypeIfListOf(baseNonNull)!;
+      final inner = _listElementTypeIfListOf(baseNonNull) ??
+          _setElementTypeIfSetOf(baseNonNull)!;
       final innerElNullable = _fieldTypeIsNullable(inner);
       final mapBody = innerElNullable
           ? '(e) => e?.inMicroseconds'
@@ -957,9 +1035,13 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
     case _JsonFieldShape.object:
       return nullable ? '${f.name}?.toJson()' : '${f.name}.toJson()';
     case _JsonFieldShape.listEnum:
+    case _JsonFieldShape.setEnum:
       final inner = _listElementTypeIfListOf(
-        _fieldTypeWithoutTrailingNullMarkers(f.typeSource),
-      )!;
+            _fieldTypeWithoutTrailingNullMarkers(f.typeSource),
+          ) ??
+          _setElementTypeIfSetOf(
+            _fieldTypeWithoutTrailingNullMarkers(f.typeSource),
+          )!;
       final t = _enumLookupKey(inner);
       final mapName = _enumJsonMapIdentifier(t);
       if (nullable) {
@@ -967,14 +1049,19 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
       }
       return '${f.name}.map((e) => $mapName[e]!).toList()';
     case _JsonFieldShape.listUint8List:
+    case _JsonFieldShape.setUint8List:
       if (nullable) {
         return '${f.name}?.map((e) => e.toList()).toList()';
       }
       return '${f.name}.map((e) => e.toList()).toList()';
     case _JsonFieldShape.listObject:
+    case _JsonFieldShape.setObject:
       final innerObj = _listElementTypeIfListOf(
-        _fieldTypeWithoutTrailingNullMarkers(f.typeSource),
-      )!;
+            _fieldTypeWithoutTrailingNullMarkers(f.typeSource),
+          ) ??
+          _setElementTypeIfSetOf(
+            _fieldTypeWithoutTrailingNullMarkers(f.typeSource),
+          )!;
       final eltNullable = _fieldTypeIsNullable(innerObj);
       final mapBody = eltNullable ? '(e) => e?.toJson()' : '(e) => e.toJson()';
       if (nullable) {

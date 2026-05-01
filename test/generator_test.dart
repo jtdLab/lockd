@@ -538,6 +538,123 @@ class _AppData with _$AppData implements AppData {
       );
     });
 
+    test('JSON: Set of primitives and objects (serialized as arrays)', () {
+      const source = r'''
+@lockd
+abstract class AppIndex with _$AppIndex {
+  const factory AppIndex({
+    required Set<String> tags,
+    required Set<Address> addresses,
+    Set<String>? optionalTags,
+  }) = _AppIndex;
+  factory AppIndex.fromJson(Map<String, dynamic> json) =>
+      _AppIndex.fromJson(json);
+}
+''';
+
+      final result = lockdModulePartDartContents(
+        moduleStem: 'app',
+        sourceTexts: [source],
+      );
+
+      expect(
+        result,
+        r"""
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
+
+part of 'app.dart';
+
+// ###### Helpers ####
+
+const Object _unset = Object();
+
+// ########################################################
+// AppIndex
+// ########################################################
+
+mixin _$AppIndex {
+  Set<String> get tags;
+
+  Set<Address> get addresses;
+
+  Set<String>? get optionalTags;
+
+  _AppIndexCopyWith get copyWith => _AppIndexCopyWith(this);
+
+  Map<String, dynamic> toJson();
+}
+
+class _AppIndexCopyWith {
+  _AppIndexCopyWith(this._v);
+
+  final _$AppIndex _v;
+
+  T _pick<T>(Object? value, T current) {
+    return identical(value, _unset) ? current : value as T;
+  }
+
+  AppIndex call({
+    Object? tags = _unset,
+    Object? addresses = _unset,
+    Object? optionalTags = _unset,
+  }) {
+    return AppIndex(
+      tags: _pick<Set<String>>(tags, _v.tags),
+      addresses: _pick<Set<Address>>(addresses, _v.addresses),
+      optionalTags: _pick<Set<String>?>(optionalTags, _v.optionalTags),
+    );
+  }
+}
+
+class _AppIndex with _$AppIndex implements AppIndex {
+  const _AppIndex({
+    required this.tags,
+    required this.addresses,
+    this.optionalTags,
+  });
+
+  factory _AppIndex.fromJson(Map<String, dynamic> json) {
+    return _AppIndex(
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toSet(),
+      addresses: (json['addresses'] as List<dynamic>)
+          .map((e) => Address.fromJson(e as Map<String, dynamic>))
+          .toSet(),
+      optionalTags: json['optionalTags'] == null
+          ? null
+          : (json['optionalTags'] as List<dynamic>)
+                .map((e) => e as String)
+                .toSet(),
+    );
+  }
+
+  @override
+  final Set<String> tags;
+
+  @override
+  final Set<Address> addresses;
+
+  @override
+  final Set<String>? optionalTags;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tags': tags,
+      'addresses': addresses.map((e) => e.toJson()).toList(),
+      'optionalTags': optionalTags,
+    };
+  }
+
+  @override
+  String toString() =>
+      'AppIndex(tags: $tags, addresses: $addresses, optionalTags: $optionalTags)';
+}
+""",
+      );
+    });
+
     test('JSON: enums with enum map + list of enums', () {
       const source = r'''
 enum Theme {
