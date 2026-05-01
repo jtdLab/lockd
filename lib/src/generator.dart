@@ -634,6 +634,8 @@ String _nestedStringKeyedMapFromJsonExpr(String mapTypeNonNull, String jsonExpr)
 }
 
 /// Serializes nested JSON map values for `toJson` (inverse of [_nestedStringKeyedMapFromJsonExpr]).
+///
+/// [valueExpr] is the Dart receiver (e.g. `m` or `m?` when the outer map field is nullable).
 String _toJsonNestedJsonMapValueExpr(String mapTypeNonNull, String valueExpr) {
   final compact = mapTypeNonNull.replaceAll(RegExp(r'\s+'), '');
   if (compact == 'Map<String,dynamic>') return valueExpr;
@@ -1155,9 +1157,8 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
       return f.name;
     case _JsonFieldShape.mapJsonNestedValues:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
-      final expr = _toJsonNestedJsonMapValueExpr(baseNonNull, f.name);
-      if (nullable) return '${f.name} == null ? null : $expr';
-      return expr;
+      final recv = nullable ? '${f.name}?' : f.name;
+      return _toJsonNestedJsonMapValueExpr(baseNonNull, recv);
     case _JsonFieldShape.mapEnumValues:
       final mapKv =
           _mapKeyAndValueTypesIfMap(_fieldTypeWithoutTrailingNullMarkers(f.typeSource))!;
@@ -1165,32 +1166,27 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
       final t = _enumLookupKey(vt);
       final mapName = _enumJsonMapIdentifier(t);
       if (nullable) {
-        return '${f.name} == null ? null : '
-            '${f.name}.map((k, v) => MapEntry(k, $mapName[v]!))';
+        return '${f.name}?.map((k, v) => MapEntry(k, $mapName[v]!))';
       }
       return '${f.name}.map((k, v) => MapEntry(k, $mapName[v]!))';
     case _JsonFieldShape.mapDateTimeValues:
       if (nullable) {
-        return '${f.name} == null ? null : '
-            '${f.name}.map((k, v) => MapEntry(k, v.toIso8601String()))';
+        return '${f.name}?.map((k, v) => MapEntry(k, v.toIso8601String()))';
       }
       return '${f.name}.map((k, v) => MapEntry(k, v.toIso8601String()))';
     case _JsonFieldShape.mapDurationValues:
       if (nullable) {
-        return '${f.name} == null ? null : '
-            '${f.name}.map((k, v) => MapEntry(k, v.inMicroseconds))';
+        return '${f.name}?.map((k, v) => MapEntry(k, v.inMicroseconds))';
       }
       return '${f.name}.map((k, v) => MapEntry(k, v.inMicroseconds))';
     case _JsonFieldShape.mapUint8ListValues:
       if (nullable) {
-        return '${f.name} == null ? null : '
-            '${f.name}.map((k, v) => MapEntry(k, v.toList()))';
+        return '${f.name}?.map((k, v) => MapEntry(k, v.toList()))';
       }
       return '${f.name}.map((k, v) => MapEntry(k, v.toList()))';
     case _JsonFieldShape.mapObjectValues:
       if (nullable) {
-        return '${f.name} == null ? null : '
-            '${f.name}.map((k, v) => MapEntry(k, v.toJson()))';
+        return '${f.name}?.map((k, v) => MapEntry(k, v.toJson()))';
       }
       return '${f.name}.map((k, v) => MapEntry(k, v.toJson()))';
     case _JsonFieldShape.dateTime:

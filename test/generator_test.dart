@@ -429,7 +429,7 @@ abstract class Utils with _$Utils {
         expect(body, contains('.map('));
         expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
         expect(body, contains("'i18n':"));
-        expect(body, contains('i18n.map((k, v) => MapEntry(k, v))'));
+        expect(body, contains('i18n?.map((k, v) => MapEntry(k, v))'));
       },
     );
 
@@ -465,7 +465,7 @@ abstract class Utils with _$Utils {
         ),
       );
       expect(body, contains("'path': path"));
-      expect(body, contains("'i18n': i18n == null ? null : i18n.map((k, v) => MapEntry(k, v))"));
+      expect(body, contains("'i18n': i18n?.map((k, v) => MapEntry(k, v))"));
       expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
     });
 
