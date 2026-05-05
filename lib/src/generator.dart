@@ -203,21 +203,42 @@ String generatedModuleEnumHelpersPart(
 }) {
   final mergedEnums = lockdEnumRegistryForModuleSources(librarySources);
   final allModels = <_CopyableEmitModel>[];
+  final allSealed = <_SealedUnionEmitModel>[];
   for (final src in librarySources) {
     final parsed = parseString(content: src, throwIfDiagnostics: false);
+    final unit = parsed.unit;
     allModels.addAll(
       _parseCopyableEmitModels(
         src,
-        unit: parsed.unit,
+        unit: unit,
+        libraryEnums: mergedEnums,
+        fieldRename: fieldRename,
+      ),
+    );
+    allSealed.addAll(
+      _parseSealedUnionModels(
+        src,
+        unit: unit,
         libraryEnums: mergedEnums,
         fieldRename: fieldRename,
       ),
     );
   }
-  if (allModels.isEmpty) return '';
-  final enumPart = _libraryEnumJsonHelpers(allModels, mergedEnums);
+  if (allModels.isEmpty && allSealed.isEmpty) return '';
+
+  final enumPart = _libraryEnumJsonHelpers(
+    mergedEnums,
+    models: allModels,
+    sealedUnions: allSealed,
+  );
+
+  final needsUnset = allModels.any((m) => m.fields.isNotEmpty) ||
+      allSealed.any((s) => s.variants.any((v) => v.fields.isNotEmpty));
+
+  if (!needsUnset && enumPart.isEmpty) return '';
+
   return _composeHelpersBody(
-    includeUnset: true,
+    includeUnset: needsUnset,
     enumHelpers: enumPart,
   );
 }
@@ -299,7 +320,11 @@ String generatedDataClassPart(
   );
   if (models.isEmpty && sealedModels.isEmpty) return '';
   final enumHelpers = includeEnumHelpers
-      ? _libraryEnumJsonHelpers(models, libraryEnums)
+      ? _libraryEnumJsonHelpers(
+          libraryEnums,
+          models: models,
+          sealedUnions: sealedModels,
+        )
       : '';
   final helpersPrefix = includeEnumHelpers
       ? [
@@ -756,18 +781,24 @@ String _enumJsonDecodeIdentifier(String typeName) =>
     '_decode${typeName}JsonMap';
 
 String _libraryEnumJsonHelpers(
-  List<_CopyableEmitModel> models, [
-  Map<String, List<LockdEnumWire>>? enumRegistry,
-]) {
-  if (models.isEmpty) return '';
-  final lib = enumRegistry ?? models.first.libraryEnums;
+  Map<String, List<LockdEnumWire>> enumRegistry, {
+  List<_CopyableEmitModel> models = const [],
+  List<_SealedUnionEmitModel> sealedUnions = const [],
+}) {
   final enums = <String>{};
   for (final m in models) {
     if (!m.hasFromJson) continue;
-    enums.addAll(_sortedEnumTypesForWire(m.fields, lib));
+    enums.addAll(_sortedEnumTypesForWire(m.fields, enumRegistry));
+  }
+  for (final s in sealedUnions) {
+    if (!s.hasFromJson) continue;
+    for (final v in s.variants) {
+      enums.addAll(_sortedEnumTypesForWire(v.fields, enumRegistry));
+    }
   }
   if (enums.isEmpty) return '';
 
+  final lib = enumRegistry;
   final b = StringBuffer();
   for (final typeName in (enums.toList()..sort())) {
     final cases = lib[typeName];

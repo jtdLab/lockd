@@ -131,10 +131,6 @@ abstract class Subscription with _$Subscription {
 
 part of 'payments.dart';
 
-// ###### Helpers ####
-
-const Object _unset = Object();
-
 // ########################################################
 // Subscription
 // ########################################################
@@ -1024,6 +1020,10 @@ sealed class Result with _$Result {
 
 part of 'result.dart';
 
+// ###### Helpers ####
+
+const Object _unset = Object();
+
 // ########################################################
 // Result
 // ########################################################
@@ -1126,6 +1126,40 @@ class _Result {
 """,
       );
     });
+
+    test(
+      'module part includes Helpers when sealed variants have fields (UserData)',
+      () {
+        const source = r'''
+@lockd
+sealed class UserData with _$UserData {
+  const factory UserData.petOwner({
+    required String displayName,
+    @Default(false) bool hasAddedPet,
+    @Default(false) bool hasCompletedOnboarding,
+  }) = UserDataPetOwner;
+
+  const factory UserData.therapist({
+    required String displayName,
+    @Default(false) bool hasCompletedOnboarding,
+  }) = UserDataTherapist;
+
+  factory UserData.fromJson(Map<String, dynamic> json) =>
+      _UserData.fromJson(json);
+}
+''';
+
+        final result = lockdModulePartDartContents(
+          moduleStem: 'user_data',
+          sourceTexts: [source],
+        );
+
+        expect(result, contains('// ###### Helpers ####'));
+        expect(result, contains('const Object _unset = Object();'));
+        expect(result, contains('// UserData'));
+        expect(result, contains('UserDataPetOwnerCopyWith'));
+      },
+    );
 
     test('custom unionKey', () {
       const source = r'''
@@ -1235,6 +1269,10 @@ sealed class Msg with _$Msg {
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'msg.dart';
+
+// ###### Helpers ####
+
+const Object _unset = Object();
 
 // ########################################################
 // Msg
