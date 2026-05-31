@@ -241,12 +241,16 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
 
   factory _AppointmentsState.fromJson(Map<String, dynamic> json) {
     return _AppointmentsState(
-      appointments: (json['appointments'] as List<dynamic>)
-          .map((e) => Appointment.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      selectedTab: AppointmentsTab.fromJson(
-        json['selectedTab'] as Map<String, dynamic>,
-      ),
+      appointments: json['appointments'] == null
+          ? []
+          : (json['appointments'] as List<dynamic>)
+                .map((e) => Appointment.fromJson(e as Map<String, dynamic>))
+                .toList(),
+      selectedTab: json['selectedTab'] == null
+          ? AppointmentsTab.upcoming
+          : AppointmentsTab.fromJson(
+              json['selectedTab'] as Map<String, dynamic>,
+            ),
     );
   }
 
@@ -269,6 +273,43 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
 }
 """,
       );
+    });
+
+    test('JSON: @Default falls back when key is absent or null', () {
+      const source = r'''
+@lockd
+abstract class ChatPreview with _$ChatPreview {
+  const factory ChatPreview({
+    required String id,
+    @Default('') String name,
+    @Default(0) int unread,
+    @Default(false) bool isOnline,
+  }) = _ChatPreview;
+  factory ChatPreview.fromJson(Map<String, dynamic> json) =>
+      _ChatPreview.fromJson(json);
+}
+''';
+
+      final result = lockdModulePartDartContents(
+        moduleStem: 'chat_preview',
+        sourceTexts: [source],
+      );
+
+      // Non-default field is a plain cast.
+      expect(result, contains("id: json['id'] as String"));
+      // Defaulted fields fall back instead of casting a missing/null value.
+      expect(
+        result,
+        contains("name: json['name'] == null ? '' : json['name'] as String"),
+      );
+      expect(
+        result,
+        contains("unread: json['unread'] == null ? 0 : json['unread'] as int"),
+      );
+      const isOnlineExpr =
+          "isOnline: json['isOnline'] == null "
+          "? false : json['isOnline'] as bool";
+      expect(result, contains(isOnlineExpr));
     });
 
     test('JSON: all primitive types (String, int, double, bool, nullable)', () {
@@ -818,9 +859,11 @@ class _Settings with _$Settings implements Settings {
   factory _Settings.fromJson(Map<String, dynamic> json) {
     return _Settings(
       theme: _decodeThemeJsonMap(json['theme'] as String),
-      recentThemes: (json['recentThemes'] as List<dynamic>)
-          .map((e) => _decodeThemeJsonMap(e as String))
-          .toList(),
+      recentThemes: json['recentThemes'] == null
+          ? []
+          : (json['recentThemes'] as List<dynamic>)
+                .map((e) => _decodeThemeJsonMap(e as String))
+                .toList(),
     );
   }
 

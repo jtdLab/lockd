@@ -975,7 +975,23 @@ _JsonFieldShape _jsonFieldShape(
 // fromJson / toJson expressions
 // ---------------------------------------------------------------------------
 
+/// Builds the `fromJson` assignment for [f].
+///
+/// When the field declares a `@Default(...)`, an absent or `null` JSON value
+/// falls back to that default instead of being cast (which would throw for a
+/// non-nullable field, e.g. `json['unreadByOwner'] as int`). This mirrors the
+/// behaviour of json_serializable's `json['key'] ?? default`.
 String _fromJsonAssignment(_Field f, _CopyableEmitModel m) {
+  final expr = _fromJsonPresentValueExpr(f, m);
+  final defaultSource = f.defaultValueSource;
+  if (defaultSource == null) return expr;
+  final jk = _jsonMapKeyForField(f, m.fieldRename);
+  final jx = _jsonBracketExpr(jk);
+  return '$jx == null ? $defaultSource : $expr';
+}
+
+/// Decodes the JSON value for [f] assuming the key is present and non-null.
+String _fromJsonPresentValueExpr(_Field f, _CopyableEmitModel m) {
   final libraryEnums = m.libraryEnums;
   final jk = _jsonMapKeyForField(f, m.fieldRename);
   final jx = _jsonBracketExpr(jk);
