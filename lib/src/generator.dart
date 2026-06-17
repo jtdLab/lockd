@@ -1320,6 +1320,72 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
 }
 
 // ---------------------------------------------------------------------------
+// Equality
+// ---------------------------------------------------------------------------
+
+/// Whether [typeSource] is a collection compared structurally (deeply) rather
+/// than by reference / scalar `==`.
+///
+/// Covers `List`, `Set`, `Iterable`, `Map`, and `Uint8List` (which is a
+/// reference-equal `List<int>` and so needs deep comparison too).
+bool _fieldTypeIsCollection(String typeSource) {
+  final base = _fieldTypeWithoutTrailingNullMarkers(typeSource);
+  return _listElementTypeIfListOf(base) != null ||
+      _setElementTypeIfSetOf(base) != null ||
+      _bracketWrappedTypeArg(base, 'Iterable') != null ||
+      _mapKeyAndValueTypesIfMap(base) != null ||
+      _isUint8ListBase(base);
+}
+
+/// One field's `==` comparison clause.
+///
+/// Collections are compared with `DeepCollectionEquality`; everything else
+/// (primitives, enums, nested lockd objects, `DateTime`, …) is compared with
+/// `==`, short-circuited by `identical` like freezed.
+String _equalityFieldClause(_Field f) {
+  if (_fieldTypeIsCollection(f.typeSource)) {
+    return 'const DeepCollectionEquality().equals(other.${f.name}, ${f.name})';
+  }
+  return '(identical(other.${f.name}, ${f.name}) || other.${f.name} == ${f.name})';
+}
+
+/// One field's contribution to `hashCode`.
+String _hashCodeComponent(_Field f) {
+  if (_fieldTypeIsCollection(f.typeSource)) {
+    return 'const DeepCollectionEquality().hash(${f.name})';
+  }
+  return f.name;
+}
+
+/// Emits `operator ==` and `hashCode` overrides for the impl class [implName].
+String _equalityAndHashCode(String implName, List<_Field> fields) {
+  final clauses = fields.map(_equalityFieldClause).toList();
+  final equalsExpr = clauses.isEmpty
+      ? 'other.runtimeType == runtimeType && other is $implName'
+      : 'other.runtimeType == runtimeType &&\n'
+            '            other is $implName &&\n'
+            '            ${clauses.join(' &&\n            ')}';
+
+  final components = ['runtimeType', ...fields.map(_hashCodeComponent)];
+  final String hashExpr;
+  if (fields.isEmpty) {
+    hashExpr = 'runtimeType.hashCode';
+  } else if (components.length <= 20) {
+    hashExpr = 'Object.hash(${components.join(', ')})';
+  } else {
+    hashExpr = 'Object.hashAll([${components.join(', ')}])';
+  }
+
+  return '  @override\n'
+      '  bool operator ==(Object other) {\n'
+      '    return identical(this, other) ||\n'
+      '        ($equalsExpr);\n'
+      '  }\n\n'
+      '  @override\n'
+      '  int get hashCode => $hashExpr;';
+}
+
+// ---------------------------------------------------------------------------
 // Private impl class
 // ---------------------------------------------------------------------------
 
@@ -1370,11 +1436,13 @@ String _classPrivateImpl(_CopyableEmitModel m) {
       ? "'${m.publicName}()'"
       : "'${m.publicName}($fieldList)'";
 
+  final equality = '\n\n${_equalityAndHashCode(m.implName, m.fields)}';
+
   return '''
 class ${m.implName} with ${m.mixinName} implements ${m.publicName} {
   $head;$fromJson
 
-$fields$toJson
+$fields$toJson$equality
 
   @override
   String toString() =>
@@ -1512,6 +1580,7 @@ String _sealedVariantImpl(_SealedUnionEmitModel m, _SealedVariant v) {
   }
   body.write(
     '$copyWith$toJson\n\n'
+    '${_equalityAndHashCode(v.implName, v.fields)}\n\n'
     '  @override\n'
     '  String toString() =>\n'
     '      $toStringBody;\n'

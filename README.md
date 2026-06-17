@@ -40,7 +40,18 @@ This produces `user.lockd.dart` containing:
 
 - A **mixin** (`_$User`) with typed getters and a `copyWith` accessor.
 - A **copyWith class** for convenient immutable updates.
-- A **private implementation** (`_User`) with `toString`.
+- A **private implementation** (`_User`) with `toString`, value-based `==`, and `hashCode`.
+
+## Value equality
+
+Generated impl classes implement structural `==` and `hashCode`
+
+- Primitives, enums, `DateTime`, and nested lockd objects are compared with `==`.
+- Collections (`List`, `Set`, `Map`, `Iterable`, `Uint8List`) are compared deeply
+  via `DeepCollectionEquality` from `package:collection`.
+
+`DeepCollectionEquality` is re-exported from `package:lockd/lockd.dart`, so no extra
+import or dependency is required in your host file.
 
 ## Opt-in model
 
@@ -147,6 +158,7 @@ This generates:
 - A **variant class** for each named constructor (`EventSuccess`, `EventError`)
 - Per-variant **copyWith** (only for variants with fields)
 - Per-variant **toString** using the constructor name (e.g. `Event.success(data: hello)`)
+- Per-variant value-based **`==`** and **`hashCode`** (different variants are never equal)
 
 ### Sealed JSON serialisation
 

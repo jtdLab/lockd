@@ -78,6 +78,26 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
   final AppointmentsTab selectedTab;
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _AppointmentsState &&
+            const DeepCollectionEquality().equals(
+              other.appointments,
+              appointments,
+            ) &&
+            (identical(other.selectedTab, selectedTab) ||
+                other.selectedTab == selectedTab));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    const DeepCollectionEquality().hash(appointments),
+    selectedTab,
+  );
+
+  @override
   String toString() =>
       'AppointmentsState(appointments: $appointments, selectedTab: $selectedTab)';
 }
@@ -159,6 +179,15 @@ class _Subscription with _$Subscription implements Subscription {
   Map<String, dynamic> toJson() {
     return {};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _Subscription);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
 
   @override
   String toString() => 'Subscription()';
@@ -266,6 +295,26 @@ class _AppointmentsState with _$AppointmentsState implements AppointmentsState {
       'selectedTab': selectedTab.toJson(),
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _AppointmentsState &&
+            const DeepCollectionEquality().equals(
+              other.appointments,
+              appointments,
+            ) &&
+            (identical(other.selectedTab, selectedTab) ||
+                other.selectedTab == selectedTab));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    const DeepCollectionEquality().hash(appointments),
+    selectedTab,
+  );
 
   @override
   String toString() =>
@@ -438,6 +487,24 @@ class _UserProfile with _$UserProfile implements UserProfile {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _UserProfile &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.age, age) || other.age == age) &&
+            (identical(other.height, height) || other.height == height) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive) &&
+            (identical(other.nickname, nickname) ||
+                other.nickname == nickname));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, name, age, height, isActive, nickname);
+
+  @override
   String toString() =>
       'UserProfile(name: $name, age: $age, height: $height, isActive: $isActive, nickname: $nickname)';
 }
@@ -461,7 +528,10 @@ abstract class Utils with _$Utils {
 
         final body = generatedDataClassPart(source, includeEnumHelpers: false);
 
-        expect(body, isNot(contains('Map<String, Map<String, dynamic>>.fromJson')));
+        expect(
+          body,
+          isNot(contains('Map<String, Map<String, dynamic>>.fromJson')),
+        );
         expect(body, contains("json['i18n'] as Map<String, dynamic>)"));
         expect(body, contains('.map('));
         expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
@@ -506,9 +576,10 @@ abstract class Utils with _$Utils {
       expect(body, contains('MapEntry(k, v as Map<String, dynamic>)'));
     });
 
-    test('JSON: non-primitives (DateTime, Duration, object, lists, nullable)',
-        () {
-      const source = r'''
+    test(
+      'JSON: non-primitives (DateTime, Duration, object, lists, nullable)',
+      () {
+        const source = r'''
 @lockd
 abstract class AppData with _$AppData {
   const factory AppData({
@@ -524,14 +595,14 @@ abstract class AppData with _$AppData {
 }
 ''';
 
-      final result = lockdModulePartDartContents(
-        moduleStem: 'app',
-        sourceTexts: [source],
-      );
+        final result = lockdModulePartDartContents(
+          moduleStem: 'app',
+          sourceTexts: [source],
+        );
 
-      expect(
-        result,
-        r"""
+        expect(
+          result,
+          r"""
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -650,12 +721,41 @@ class _AppData with _$AppData implements AppData {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _AppData &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.timeout, timeout) || other.timeout == timeout) &&
+            (identical(other.address, address) || other.address == address) &&
+            const DeepCollectionEquality().equals(other.tags, tags) &&
+            const DeepCollectionEquality().equals(other.addresses, addresses) &&
+            const DeepCollectionEquality().equals(
+              other.optionalTags,
+              optionalTags,
+            ));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    createdAt,
+    timeout,
+    address,
+    const DeepCollectionEquality().hash(tags),
+    const DeepCollectionEquality().hash(addresses),
+    const DeepCollectionEquality().hash(optionalTags),
+  );
+
+  @override
   String toString() =>
       'AppData(createdAt: $createdAt, timeout: $timeout, address: $address, tags: $tags, addresses: $addresses, optionalTags: $optionalTags)';
 }
 """,
-      );
-    });
+        );
+      },
+    );
 
     test('JSON: Set of primitives and objects (serialized as arrays)', () {
       const source = r'''
@@ -765,6 +865,27 @@ class _AppIndex with _$AppIndex implements AppIndex {
       'optionalTags': optionalTags,
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _AppIndex &&
+            const DeepCollectionEquality().equals(other.tags, tags) &&
+            const DeepCollectionEquality().equals(other.addresses, addresses) &&
+            const DeepCollectionEquality().equals(
+              other.optionalTags,
+              optionalTags,
+            ));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    const DeepCollectionEquality().hash(tags),
+    const DeepCollectionEquality().hash(addresses),
+    const DeepCollectionEquality().hash(optionalTags),
+  );
 
   @override
   String toString() =>
@@ -881,6 +1002,25 @@ class _Settings with _$Settings implements Settings {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _Settings &&
+            (identical(other.theme, theme) || other.theme == theme) &&
+            const DeepCollectionEquality().equals(
+              other.recentThemes,
+              recentThemes,
+            ));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    theme,
+    const DeepCollectionEquality().hash(recentThemes),
+  );
+
+  @override
   String toString() => 'Settings(theme: $theme, recentThemes: $recentThemes)';
 }
 """,
@@ -930,6 +1070,16 @@ class AccountCreatePresentationEventCreateAccountFailed
   const AccountCreatePresentationEventCreateAccountFailed();
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is AccountCreatePresentationEventCreateAccountFailed);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
   String toString() => 'AccountCreatePresentationEvent.createAccountFailed()';
 }
 
@@ -939,6 +1089,16 @@ class AccountCreatePresentationEventCreateAccountSuccess
   const AccountCreatePresentationEventCreateAccountSuccess();
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is AccountCreatePresentationEventCreateAccountSuccess);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
   String toString() => 'AccountCreatePresentationEvent.createAccountSuccess()';
 }
 
@@ -946,6 +1106,16 @@ class AccountCreatePresentationEventFoo
     with _$AccountCreatePresentationEvent
     implements AccountCreatePresentationEvent {
   const AccountCreatePresentationEventFoo();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is AccountCreatePresentationEventFoo);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
 
   @override
   String toString() => 'AccountCreatePresentationEvent.foo()';
@@ -1000,6 +1170,15 @@ class EventA with _$Event implements Event {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is EventA);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
   String toString() => 'Event.a()';
 }
 
@@ -1014,6 +1193,15 @@ class EventB with _$Event implements Event {
   Map<String, dynamic> toJson() {
     return {'type': 'b'};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is EventB);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
 
   @override
   String toString() => 'Event.b()';
@@ -1106,6 +1294,17 @@ class ResultSuccess with _$Result implements Result {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ResultSuccess &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @override
   String toString() => 'Result.success(data: $data)';
 }
 
@@ -1146,6 +1345,18 @@ class ResultError with _$Result implements Result {
   Map<String, dynamic> toJson() {
     return {'type': 'error', 'message': message, 'code': code};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ResultError &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.code, code) || other.code == code));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message, code);
 
   @override
   String toString() => 'Result.error(message: $message, code: $code)';
@@ -1250,6 +1461,15 @@ class ActionTap with _$Action implements Action {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ActionTap);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
   String toString() => 'Action.tap()';
 }
 
@@ -1264,6 +1484,15 @@ class ActionSwipe with _$Action implements Action {
   Map<String, dynamic> toJson() {
     return {'kind': 'swipe'};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ActionSwipe);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
 
   @override
   String toString() => 'Action.swipe()';
@@ -1366,6 +1595,18 @@ class MsgInfo with _$Msg implements Msg {
   }
 
   @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MsgInfo &&
+            (identical(other.text, text) || other.text == text) &&
+            (identical(other.meta, meta) || other.meta == meta));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, text, meta);
+
+  @override
   String toString() => 'Msg.info(text: $text, meta: $meta)';
 }
 
@@ -1405,6 +1646,18 @@ class MsgWarn with _$Msg implements Msg {
   Map<String, dynamic> toJson() {
     return {'type': 'warn', 'text': text, 'meta': meta};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MsgWarn &&
+            (identical(other.text, text) || other.text == text) &&
+            (identical(other.meta, meta) || other.meta == meta));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, text, meta);
 
   @override
   String toString() => 'Msg.warn(text: $text, meta: $meta)';
