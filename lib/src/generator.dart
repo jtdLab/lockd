@@ -99,7 +99,6 @@ String? _annotationSimpleName(Annotation meta) {
   return switch (n) {
     SimpleIdentifier(:final name) => name,
     PrefixedIdentifier(:final identifier) => identifier.name,
-    LibraryIdentifier(:final name) => name,
   };
 }
 
@@ -118,8 +117,8 @@ String _lockdUnionKey(ClassDeclaration decl) {
     final args = meta.arguments;
     if (args == null) continue;
     for (final arg in args.arguments) {
-      if (arg is NamedExpression && arg.name.label.name == 'unionKey') {
-        final expr = arg.expression;
+      if (arg is NamedArgument && arg.name.lexeme == 'unionKey') {
+        final expr = arg.argumentExpression;
         if (expr is SimpleStringLiteral) return expr.value;
         if (expr is StringLiteral) return expr.stringValue ?? 'type';
       }
@@ -132,14 +131,14 @@ String? _jsonKeyNameFromAnnotation(Annotation meta) {
   final args = meta.arguments;
   if (args == null) return null;
   for (final arg in args.arguments) {
-    if (arg is NamedExpression && arg.name.label.name == 'name') {
-      final expr = arg.expression;
+    if (arg is NamedArgument && arg.name.lexeme == 'name') {
+      final expr = arg.argumentExpression;
       if (expr is SimpleStringLiteral) return expr.value;
       if (expr is StringLiteral) return expr.stringValue;
     }
   }
   for (final arg in args.arguments) {
-    if (arg is NamedExpression) continue;
+    if (arg is NamedArgument) continue;
     if (arg is SimpleStringLiteral) return arg.value;
     if (arg is StringLiteral) return arg.stringValue;
     return null;
@@ -1770,10 +1769,17 @@ List<_SealedUnionEmitModel> _parseSealedUnionModels(
 // Formal parameter helpers
 // ---------------------------------------------------------------------------
 
+// Analyzer 13 removed `DefaultFormalParameter` (defaults are now a
+// `defaultClause` on every parameter) and merged `SimpleFormalParameter` +
+// `FunctionTypedFormalParameter` into `RegularFormalParameter`. A
+// `RegularFormalParameter` without a `functionTypedSuffix` is exactly what
+// used to be a `SimpleFormalParameter`; matching on that keeps the old
+// behaviour of ignoring old-style function-typed parameters.
+
 String? _formalParameterName(FormalParameter param) {
-  final inner = param is DefaultFormalParameter ? param.parameter : param;
-  return switch (inner) {
-    SimpleFormalParameter(:final name?) => name.lexeme,
+  return switch (param) {
+    RegularFormalParameter(:final name?, functionTypedSuffix: null) =>
+      name.lexeme,
     FieldFormalParameter(:final name) => name.lexeme,
     _ => null,
   };
@@ -1787,7 +1793,6 @@ String? _defaultAnnotationArgumentSource(
     final simple = switch (meta.name) {
       SimpleIdentifier(:final name) => name,
       PrefixedIdentifier(:final identifier) => identifier.name,
-      LibraryIdentifier(:final name) => name,
     };
     if (simple != 'Default') continue;
     final args = meta.arguments;
@@ -1802,13 +1807,9 @@ String? _defaultFromFormalParameter(
   String source,
   FormalParameter param,
 ) {
-  final inner = param is DefaultFormalParameter ? param.parameter : param;
-  return switch (inner) {
-    final SimpleFormalParameter p => _defaultAnnotationArgumentSource(
-      source,
-      p,
-    ),
-    final FieldFormalParameter p => _defaultAnnotationArgumentSource(source, p),
+  return switch (param) {
+    RegularFormalParameter(functionTypedSuffix: null) ||
+    FieldFormalParameter() => _defaultAnnotationArgumentSource(source, param),
     _ => null,
   };
 }
@@ -1817,10 +1818,9 @@ String? _jsonKeyFromFormalParameter(
   String source,
   FormalParameter param,
 ) {
-  final inner = param is DefaultFormalParameter ? param.parameter : param;
-  return switch (inner) {
-    final SimpleFormalParameter p => _jsonKeyNameFromMetadata(p),
-    final FieldFormalParameter p => _jsonKeyNameFromMetadata(p),
+  return switch (param) {
+    RegularFormalParameter(functionTypedSuffix: null) ||
+    FieldFormalParameter() => _jsonKeyNameFromMetadata(param),
     _ => null,
   };
 }
@@ -1861,12 +1861,11 @@ List<_Field> _collectFieldsFromFormalParameters(
 ) {
   final fields = <_Field>[];
   for (final param in parameters.parameters) {
-    final inner = param is DefaultFormalParameter ? param.parameter : param;
-    if (inner is SimpleFormalParameter) {
-      final name = inner.name?.lexeme;
+    if (param is RegularFormalParameter && param.functionTypedSuffix == null) {
+      final name = param.name?.lexeme;
       if (name == null) continue;
-      final typeSlice = inner.type != null
-          ? source.substring(inner.type!.offset, inner.type!.end).trim()
+      final typeSlice = param.type != null
+          ? source.substring(param.type!.offset, param.type!.end).trim()
           : 'dynamic';
       fields.add(
         _Field(
@@ -1876,10 +1875,10 @@ List<_Field> _collectFieldsFromFormalParameters(
           jsonKeyName: _jsonKeyFromFormalParameter(source, param),
         ),
       );
-    } else if (inner is FieldFormalParameter) {
-      final name = inner.name.lexeme;
-      final typeSlice = inner.type != null
-          ? source.substring(inner.type!.offset, inner.type!.end).trim()
+    } else if (param is FieldFormalParameter) {
+      final name = param.name.lexeme;
+      final typeSlice = param.type != null
+          ? source.substring(param.type!.offset, param.type!.end).trim()
           : 'dynamic';
       fields.add(
         _Field(
