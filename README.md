@@ -39,7 +39,8 @@ dart run lockd
 This produces `user.lockd.dart` containing:
 
 - A **mixin** (`_$User`) with typed getters and a `copyWith` accessor.
-- A **copyWith class** for convenient immutable updates.
+- A **typed copyWith interface** (`$UserCopyWith`) so the analyzer checks every argument at the call site,
+  backed by a sentinel-based implementation (`_$UserCopyWithImpl`) that still lets you pass an explicit `null` to a nullable field.
 - A **private implementation** (`_User`) with `toString`, value-based `==`, and `hashCode`.
 
 ## Value equality
@@ -156,7 +157,7 @@ This generates:
 
 - A shared **mixin** (`_$Event`)
 - A **variant class** for each named constructor (`EventSuccess`, `EventError`)
-- Per-variant **copyWith** (only for variants with fields)
+- Per-variant typed **copyWith** (`$EventSuccessCopyWith`, only for variants with fields)
 - Per-variant **toString** using the constructor name (e.g. `Event.success(data: hello)`)
 - Per-variant value-based **`==`** and **`hashCode`** (different variants are never equal)
 

@@ -42,11 +42,21 @@ mixin _$AppointmentsState {
 
   AppointmentsTab get selectedTab;
 
-  _AppointmentsStateCopyWith get copyWith => _AppointmentsStateCopyWith(this);
+  $AppointmentsStateCopyWith get copyWith =>
+      _$AppointmentsStateCopyWithImpl(this);
 }
 
-class _AppointmentsStateCopyWith {
-  _AppointmentsStateCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $AppointmentsStateCopyWith {
+  AppointmentsState call({
+    List<Appointment>? appointments,
+    AppointmentsTab? selectedTab,
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$AppointmentsStateCopyWithImpl implements $AppointmentsStateCopyWith {
+  _$AppointmentsStateCopyWithImpl(this._v);
 
   final _$AppointmentsState _v;
 
@@ -54,6 +64,7 @@ class _AppointmentsStateCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   AppointmentsState call({
     Object? appointments = _unset,
     Object? selectedTab = _unset,
@@ -237,13 +248,23 @@ mixin _$AppointmentsState {
 
   AppointmentsTab get selectedTab;
 
-  _AppointmentsStateCopyWith get copyWith => _AppointmentsStateCopyWith(this);
+  $AppointmentsStateCopyWith get copyWith =>
+      _$AppointmentsStateCopyWithImpl(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _AppointmentsStateCopyWith {
-  _AppointmentsStateCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $AppointmentsStateCopyWith {
+  AppointmentsState call({
+    List<Appointment>? appointments,
+    AppointmentsTab? selectedTab,
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$AppointmentsStateCopyWithImpl implements $AppointmentsStateCopyWith {
+  _$AppointmentsStateCopyWithImpl(this._v);
 
   final _$AppointmentsState _v;
 
@@ -251,6 +272,7 @@ class _AppointmentsStateCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   AppointmentsState call({
     Object? appointments = _unset,
     Object? selectedTab = _unset,
@@ -411,13 +433,25 @@ mixin _$UserProfile {
 
   String? get nickname;
 
-  _UserProfileCopyWith get copyWith => _UserProfileCopyWith(this);
+  $UserProfileCopyWith get copyWith => _$UserProfileCopyWithImpl(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _UserProfileCopyWith {
-  _UserProfileCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $UserProfileCopyWith {
+  UserProfile call({
+    String? name,
+    int? age,
+    double? height,
+    bool? isActive,
+    String? nickname,
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$UserProfileCopyWithImpl implements $UserProfileCopyWith {
+  _$UserProfileCopyWithImpl(this._v);
 
   final _$UserProfile _v;
 
@@ -425,6 +459,7 @@ class _UserProfileCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   UserProfile call({
     Object? name = _unset,
     Object? age = _unset,
@@ -631,13 +666,26 @@ mixin _$AppData {
 
   List<String>? get optionalTags;
 
-  _AppDataCopyWith get copyWith => _AppDataCopyWith(this);
+  $AppDataCopyWith get copyWith => _$AppDataCopyWithImpl(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _AppDataCopyWith {
-  _AppDataCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $AppDataCopyWith {
+  AppData call({
+    DateTime? createdAt,
+    Duration? timeout,
+    Address? address,
+    List<String>? tags,
+    List<Address>? addresses,
+    List<String>? optionalTags,
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$AppDataCopyWithImpl implements $AppDataCopyWith {
+  _$AppDataCopyWithImpl(this._v);
 
   final _$AppData _v;
 
@@ -645,6 +693,7 @@ class _AppDataCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   AppData call({
     Object? createdAt = _unset,
     Object? timeout = _unset,
@@ -801,13 +850,23 @@ mixin _$AppIndex {
 
   Set<String>? get optionalTags;
 
-  _AppIndexCopyWith get copyWith => _AppIndexCopyWith(this);
+  $AppIndexCopyWith get copyWith => _$AppIndexCopyWithImpl(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _AppIndexCopyWith {
-  _AppIndexCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $AppIndexCopyWith {
+  AppIndex call({
+    Set<String>? tags,
+    Set<Address>? addresses,
+    Set<String>? optionalTags,
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$AppIndexCopyWithImpl implements $AppIndexCopyWith {
+  _$AppIndexCopyWithImpl(this._v);
 
   final _$AppIndex _v;
 
@@ -815,6 +874,7 @@ class _AppIndexCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   AppIndex call({
     Object? tags = _unset,
     Object? addresses = _unset,
@@ -952,13 +1012,19 @@ mixin _$Settings {
 
   List<Theme> get recentThemes;
 
-  _SettingsCopyWith get copyWith => _SettingsCopyWith(this);
+  $SettingsCopyWith get copyWith => _$SettingsCopyWithImpl(this);
 
   Map<String, dynamic> toJson();
 }
 
-class _SettingsCopyWith {
-  _SettingsCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $SettingsCopyWith {
+  Settings call({Theme? theme, List<Theme>? recentThemes});
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$SettingsCopyWithImpl implements $SettingsCopyWith {
+  _$SettingsCopyWithImpl(this._v);
 
   final _$Settings _v;
 
@@ -966,6 +1032,7 @@ class _SettingsCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   Settings call({Object? theme = _unset, Object? recentThemes = _unset}) {
     return Settings(
       theme: _pick<Theme>(theme, _v.theme),
@@ -1263,8 +1330,14 @@ mixin _$Result {
   Map<String, dynamic> toJson();
 }
 
-class ResultSuccessCopyWith {
-  ResultSuccessCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $ResultSuccessCopyWith {
+  ResultSuccess call({String? data});
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$ResultSuccessCopyWithImpl implements $ResultSuccessCopyWith {
+  _$ResultSuccessCopyWithImpl(this._v);
 
   final ResultSuccess _v;
 
@@ -1272,6 +1345,7 @@ class ResultSuccessCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   ResultSuccess call({Object? data = _unset}) {
     return ResultSuccess(data: _pick<String>(data, _v.data));
   }
@@ -1286,7 +1360,7 @@ class ResultSuccess with _$Result implements Result {
 
   final String data;
 
-  ResultSuccessCopyWith get copyWith => ResultSuccessCopyWith(this);
+  $ResultSuccessCopyWith get copyWith => _$ResultSuccessCopyWithImpl(this);
 
   @override
   Map<String, dynamic> toJson() {
@@ -1308,8 +1382,14 @@ class ResultSuccess with _$Result implements Result {
   String toString() => 'Result.success(data: $data)';
 }
 
-class ResultErrorCopyWith {
-  ResultErrorCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $ResultErrorCopyWith {
+  ResultError call({String? message, int? code});
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$ResultErrorCopyWithImpl implements $ResultErrorCopyWith {
+  _$ResultErrorCopyWithImpl(this._v);
 
   final ResultError _v;
 
@@ -1317,6 +1397,7 @@ class ResultErrorCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   ResultError call({Object? message = _unset, Object? code = _unset}) {
     return ResultError(
       message: _pick<String>(message, _v.message),
@@ -1339,7 +1420,7 @@ class ResultError with _$Result implements Result {
 
   final int code;
 
-  ResultErrorCopyWith get copyWith => ResultErrorCopyWith(this);
+  $ResultErrorCopyWith get copyWith => _$ResultErrorCopyWithImpl(this);
 
   @override
   Map<String, dynamic> toJson() {
@@ -1411,7 +1492,7 @@ sealed class UserData with _$UserData {
         expect(result, contains('// ###### Helpers ####'));
         expect(result, contains('const Object _unset = Object();'));
         expect(result, contains('// UserData'));
-        expect(result, contains('UserDataPetOwnerCopyWith'));
+        expect(result, contains(r'$UserDataPetOwnerCopyWith'));
       },
     );
 
@@ -1557,8 +1638,14 @@ mixin _$Msg {
   Map<String, dynamic> toJson();
 }
 
-class MsgInfoCopyWith {
-  MsgInfoCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $MsgInfoCopyWith {
+  MsgInfo call({String? text, String? meta});
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$MsgInfoCopyWithImpl implements $MsgInfoCopyWith {
+  _$MsgInfoCopyWithImpl(this._v);
 
   final MsgInfo _v;
 
@@ -1566,6 +1653,7 @@ class MsgInfoCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   MsgInfo call({Object? text = _unset, Object? meta = _unset}) {
     return MsgInfo(
       text: _pick<String>(text, _v.text),
@@ -1587,7 +1675,7 @@ class MsgInfo with _$Msg implements Msg {
   @override
   final String? meta;
 
-  MsgInfoCopyWith get copyWith => MsgInfoCopyWith(this);
+  $MsgInfoCopyWith get copyWith => _$MsgInfoCopyWithImpl(this);
 
   @override
   Map<String, dynamic> toJson() {
@@ -1610,8 +1698,14 @@ class MsgInfo with _$Msg implements Msg {
   String toString() => 'Msg.info(text: $text, meta: $meta)';
 }
 
-class MsgWarnCopyWith {
-  MsgWarnCopyWith(this._v);
+/// Strongly typed interface exposed to callers
+abstract class $MsgWarnCopyWith {
+  MsgWarn call({String? text, String? meta});
+}
+
+/// Implementation using standard sentinel default values under the hood
+class _$MsgWarnCopyWithImpl implements $MsgWarnCopyWith {
+  _$MsgWarnCopyWithImpl(this._v);
 
   final MsgWarn _v;
 
@@ -1619,6 +1713,7 @@ class MsgWarnCopyWith {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   MsgWarn call({Object? text = _unset, Object? meta = _unset}) {
     return MsgWarn(
       text: _pick<String>(text, _v.text),
@@ -1640,7 +1735,7 @@ class MsgWarn with _$Msg implements Msg {
   @override
   final String meta;
 
-  MsgWarnCopyWith get copyWith => MsgWarnCopyWith(this);
+  $MsgWarnCopyWith get copyWith => _$MsgWarnCopyWithImpl(this);
 
   @override
   Map<String, dynamic> toJson() {

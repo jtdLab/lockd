@@ -419,6 +419,8 @@ class _CopyableEmitModel {
 
   String get mixinName => '_\$$publicName';
   String get copyWithName => '_${publicName}CopyWith';
+  String get copyWithInterfaceName => '\$${publicName}CopyWith';
+  String get copyWithImplName => '_\$${publicName}CopyWithImpl';
 }
 
 // ---------------------------------------------------------------------------
@@ -438,7 +440,8 @@ class _SealedVariant {
   final List<_Field> fields;
   final bool ctorIsConst;
 
-  String get copyWithName => '${implName}CopyWith';
+  String get copyWithInterfaceName => '\$${implName}CopyWith';
+  String get copyWithImplName => '_\$${implName}CopyWithImpl';
 }
 
 class _SealedUnionEmitModel {
@@ -506,7 +509,8 @@ String _mixinCopyable(_CopyableEmitModel m) {
 
   final copyWithGetter = m.fields.isEmpty
       ? '  ${m.copyWithName} get copyWith => const ${m.copyWithName}();'
-      : '  ${m.copyWithName} get copyWith => ${m.copyWithName}(this);';
+      : '  ${m.copyWithInterfaceName} get copyWith => '
+            '${m.copyWithImplName}(this);';
   final parts = <String>[
     if (getters.isNotEmpty) getters,
     copyWithGetter,
@@ -533,6 +537,7 @@ class ${m.copyWithName} {
   }
 
   const unset = '_unset';
+  final typedParams = _copyWithInterfaceParams(m.fields);
   final params = m.fields.map((f) => '    Object? ${f.name} = $unset,').join('\n');
 
   final body = 'return ${m.publicName}(\n'
@@ -540,8 +545,16 @@ class ${m.copyWithName} {
       '    );';
 
   return '''
-class ${m.copyWithName} {
-  ${m.copyWithName}(this._v);
+/// Strongly typed interface exposed to callers
+abstract class ${m.copyWithInterfaceName} {
+  ${m.publicName} call({
+$typedParams
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class ${m.copyWithImplName} implements ${m.copyWithInterfaceName} {
+  ${m.copyWithImplName}(this._v);
 
   final ${m.mixinName} _v;
 
@@ -549,6 +562,7 @@ class ${m.copyWithName} {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   ${m.publicName} call({
 $params
   }) {
@@ -556,6 +570,19 @@ $params
   }
 }'''
       .trim();
+}
+
+/// Typed optional parameters for a `copyWith` interface: every field type
+/// widened to nullable so callers may omit it. The implementation overrides
+/// them as `Object? = _unset`, so an explicit `null` still reaches the field.
+String _copyWithInterfaceParams(List<_Field> fields) => fields
+    .map((f) => '    ${_nullableTypeSource(f.typeSource)} ${f.name},')
+    .join('\n');
+
+String _nullableTypeSource(String typeSource) {
+  final t = typeSource.trim();
+  if (t == 'dynamic' || _fieldTypeIsNullable(t)) return t;
+  return '$t?';
 }
 
 // ---------------------------------------------------------------------------
@@ -1471,6 +1498,7 @@ String _sealedMixin(_SealedUnionEmitModel m) {
 
 String _sealedVariantCopyWith(_SealedVariant v) {
   const unset = '_unset';
+  final typedParams = _copyWithInterfaceParams(v.fields);
   final params =
       v.fields.map((f) => '    Object? ${f.name} = $unset,').join('\n');
   final body =
@@ -1478,8 +1506,16 @@ String _sealedVariantCopyWith(_SealedVariant v) {
       '      ${v.fields.map((f) => '${f.name}: _pick<${f.typeSource}>(${f.name}, _v.${f.name})').join(',\n      ')},\n'
       '    );';
   return '''
-class ${v.copyWithName} {
-  ${v.copyWithName}(this._v);
+/// Strongly typed interface exposed to callers
+abstract class ${v.copyWithInterfaceName} {
+  ${v.implName} call({
+$typedParams
+  });
+}
+
+/// Implementation using standard sentinel default values under the hood
+class ${v.copyWithImplName} implements ${v.copyWithInterfaceName} {
+  ${v.copyWithImplName}(this._v);
 
   final ${v.implName} _v;
 
@@ -1487,6 +1523,7 @@ class ${v.copyWithName} {
     return identical(value, _unset) ? current : value as T;
   }
 
+  @override
   ${v.implName} call({
 $params
   }) {
@@ -1559,7 +1596,8 @@ String _sealedVariantImpl(_SealedUnionEmitModel m, _SealedVariant v) {
       : '';
 
   final copyWith = v.fields.isNotEmpty
-      ? '\n\n  ${v.copyWithName} get copyWith => ${v.copyWithName}(this);'
+      ? '\n\n  ${v.copyWithInterfaceName} get copyWith => '
+            '${v.copyWithImplName}(this);'
       : '';
 
   final fieldList =
