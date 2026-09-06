@@ -910,9 +910,9 @@ class _AppIndex with _$AppIndex implements AppIndex {
 
   Map<String, dynamic> toJson() {
     return {
-      'tags': tags,
+      'tags': tags.toList(),
       'addresses': addresses.map((e) => e.toJson()).toList(),
-      'optionalTags': optionalTags,
+      'optionalTags': optionalTags?.toList(),
     };
   }
 

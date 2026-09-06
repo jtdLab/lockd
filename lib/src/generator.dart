@@ -1223,9 +1223,12 @@ String _toJsonValueExpr(_Field f, _CopyableEmitModel m) {
   switch (shape) {
     case _JsonFieldShape.primitive:
     case _JsonFieldShape.listPrimitive:
-    case _JsonFieldShape.setPrimitive:
     case _JsonFieldShape.mapPrimitiveValues:
       return f.name;
+    case _JsonFieldShape.setPrimitive:
+      // A Set is not JSON: `jsonEncode` rejects it, and `fromJson` reads the
+      // field back as a List anyway — so it is written as one.
+      return nullable ? '${f.name}?.toList()' : '${f.name}.toList()';
     case _JsonFieldShape.mapJsonNestedValues:
       final baseNonNull = _fieldTypeWithoutTrailingNullMarkers(f.typeSource);
       final recv = nullable ? '${f.name}?' : f.name;
