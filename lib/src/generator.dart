@@ -545,14 +545,12 @@ class ${m.copyWithName} {
       '    );';
 
   return '''
-/// Strongly typed interface exposed to callers
 abstract class ${m.copyWithInterfaceName} {
   ${m.publicName} call({
 $typedParams
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class ${m.copyWithImplName} implements ${m.copyWithInterfaceName} {
   ${m.copyWithImplName}(this._v);
 
@@ -1506,14 +1504,12 @@ String _sealedVariantCopyWith(_SealedVariant v) {
       '      ${v.fields.map((f) => '${f.name}: _pick<${f.typeSource}>(${f.name}, _v.${f.name})').join(',\n      ')},\n'
       '    );';
   return '''
-/// Strongly typed interface exposed to callers
 abstract class ${v.copyWithInterfaceName} {
   ${v.implName} call({
 $typedParams
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class ${v.copyWithImplName} implements ${v.copyWithInterfaceName} {
   ${v.copyWithImplName}(this._v);
 

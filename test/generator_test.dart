@@ -46,7 +46,6 @@ mixin _$AppointmentsState {
       _$AppointmentsStateCopyWithImpl(this);
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $AppointmentsStateCopyWith {
   AppointmentsState call({
     List<Appointment>? appointments,
@@ -54,7 +53,6 @@ abstract class $AppointmentsStateCopyWith {
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$AppointmentsStateCopyWithImpl implements $AppointmentsStateCopyWith {
   _$AppointmentsStateCopyWithImpl(this._v);
 
@@ -254,7 +252,6 @@ mixin _$AppointmentsState {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $AppointmentsStateCopyWith {
   AppointmentsState call({
     List<Appointment>? appointments,
@@ -262,7 +259,6 @@ abstract class $AppointmentsStateCopyWith {
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$AppointmentsStateCopyWithImpl implements $AppointmentsStateCopyWith {
   _$AppointmentsStateCopyWithImpl(this._v);
 
@@ -438,7 +434,6 @@ mixin _$UserProfile {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $UserProfileCopyWith {
   UserProfile call({
     String? name,
@@ -449,7 +444,6 @@ abstract class $UserProfileCopyWith {
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$UserProfileCopyWithImpl implements $UserProfileCopyWith {
   _$UserProfileCopyWithImpl(this._v);
 
@@ -671,7 +665,6 @@ mixin _$AppData {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $AppDataCopyWith {
   AppData call({
     DateTime? createdAt,
@@ -683,7 +676,6 @@ abstract class $AppDataCopyWith {
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$AppDataCopyWithImpl implements $AppDataCopyWith {
   _$AppDataCopyWithImpl(this._v);
 
@@ -855,7 +847,6 @@ mixin _$AppIndex {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $AppIndexCopyWith {
   AppIndex call({
     Set<String>? tags,
@@ -864,7 +855,6 @@ abstract class $AppIndexCopyWith {
   });
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$AppIndexCopyWithImpl implements $AppIndexCopyWith {
   _$AppIndexCopyWithImpl(this._v);
 
@@ -1017,12 +1007,10 @@ mixin _$Settings {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $SettingsCopyWith {
   Settings call({Theme? theme, List<Theme>? recentThemes});
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$SettingsCopyWithImpl implements $SettingsCopyWith {
   _$SettingsCopyWithImpl(this._v);
 
@@ -1330,12 +1318,10 @@ mixin _$Result {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $ResultSuccessCopyWith {
   ResultSuccess call({String? data});
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$ResultSuccessCopyWithImpl implements $ResultSuccessCopyWith {
   _$ResultSuccessCopyWithImpl(this._v);
 
@@ -1382,12 +1368,10 @@ class ResultSuccess with _$Result implements Result {
   String toString() => 'Result.success(data: $data)';
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $ResultErrorCopyWith {
   ResultError call({String? message, int? code});
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$ResultErrorCopyWithImpl implements $ResultErrorCopyWith {
   _$ResultErrorCopyWithImpl(this._v);
 
@@ -1638,12 +1622,10 @@ mixin _$Msg {
   Map<String, dynamic> toJson();
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $MsgInfoCopyWith {
   MsgInfo call({String? text, String? meta});
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$MsgInfoCopyWithImpl implements $MsgInfoCopyWith {
   _$MsgInfoCopyWithImpl(this._v);
 
@@ -1698,12 +1680,10 @@ class MsgInfo with _$Msg implements Msg {
   String toString() => 'Msg.info(text: $text, meta: $meta)';
 }
 
-/// Strongly typed interface exposed to callers
 abstract class $MsgWarnCopyWith {
   MsgWarn call({String? text, String? meta});
 }
 
-/// Implementation using standard sentinel default values under the hood
 class _$MsgWarnCopyWithImpl implements $MsgWarnCopyWith {
   _$MsgWarnCopyWithImpl(this._v);
 
